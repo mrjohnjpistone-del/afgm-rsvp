@@ -43,6 +43,9 @@
         <select id="dealer" required><option value="">Choose one…</option></select>
       </label>
       <label class="f"><span>Ticket number <em>*</em></span><input id="ticket" maxlength="60" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="From the ticket the dealership gave you" required></label>
+      <label class="f"><span>How many seats? <em>*</em></span>
+        <select id="seats"><option value="2" selected>Me + 1 guest (2 seats)</option><option value="1">Just me (1 seat)</option></select>
+      </label>
       <div class="hp" aria-hidden="true"><label>Website <input id="website" tabindex="-1" autocomplete="off"></label></div>
 
       <label class="check"><input type="checkbox" id="ack">
@@ -112,7 +115,7 @@
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: $('name').value, email: $('email').value, phone: $('phone').value, night: $('night').value,
-        dealer: $('dealer').value, ticket: $('ticket').value, website: $('website').value, ack: true,
+        dealer: $('dealer').value, ticket: $('ticket').value, seats: Number($('seats').value), website: $('website').value, ack: true,
       }),
     }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
       .then(function (x) {
@@ -121,6 +124,7 @@
         $('doneWho').innerHTML = 'Thank you, <b>' + esc($('name').value.trim()) + '</b>.';
         $('doneList').innerHTML = '<li><b>A Few Good Men</b><br>' + esc(night) + '</li>' +
           '<li><b>Ticket #</b> ' + esc(x.d.testdrive.ticket) + '</li>' +
+          '<li><b>Seats</b> ' + (x.d.testdrive.seats === 1 ? 'just you' : 'you + 1 guest') + '</li>' +
           '<li><b>Test drive</b> ' + esc($('dealer').value) + '</li>';
         $('formCard').hidden = true; $('doneCard').hidden = false;
         $('doneCard').scrollIntoView({ block: 'start', behavior: 'smooth' });

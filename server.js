@@ -31,7 +31,7 @@ const EVENTS = [
   { id: 'dd',  name: "Director's Dinner",         when: 'Thursday, Nov. 5, 2026 @ 6:00 PM',   capped: true,  students: false },
   { id: 'fd',  name: 'Final Dress Rehearsal',     when: 'Thursday, Nov. 5, 2026 @ 8:00 PM',   capped: false, students: true  },
   { id: 'vdd', name: "Veteran's Day Dinner",      when: 'Wednesday, Nov. 11, 2026 @ 6:00 PM', capped: true,  students: false },
-  { id: 'vdp', name: "Veteran's Day Performance", when: 'Wednesday, Nov. 11, 2026 @ 8:00 PM', capped: false, students: false },
+  { id: 'vdp', name: "Veteran's Day Performance", when: 'Wednesday, Nov. 11, 2026 @ 7:00 PM', capped: false, students: false },
 ];
 const CATEGORIES = ['Veteran', 'Active Duty Military', 'First Responder', 'Teacher', 'Student'];
 const DEFAULT_CAP = 80;
@@ -48,14 +48,14 @@ const NIGHTS = [
   { id: '2026-11-21', label: 'Saturday, Nov. 21 @ 7:00 PM' },
 ];
 const DEALERS = ['Toad Suck Harley-Davidson', 'Jay Hodge Ford'];
-const DEALER_BLOCK = 50; // tickets set aside per dealership — shown to staff, not enforced
+const DEALER_BLOCK = 100; // seats set aside per dealership (each ticket covers the holder + 1 guest) — shown to staff, not enforced
 
 function freshStore() {
   return {
     settings: { staff_key: DEFAULT_KEY, caps: { dd: DEFAULT_CAP, vdd: DEFAULT_CAP } },
     // { id, name, email, phone, category, events: { dd: 0|1|2, ... }, guest, notes, created_at }
     rsvps: [],
-    // { id, name, email, phone, night, dealer, ticket, created_at }
+    // { id, name, email, phone, night, dealer, ticket, seats: 1|2, created_at }
     testdrives: [],
     trash: [], // { kind: 'rsvp'|'testdrive', rec, removed_at } — last 50 removals
   };
@@ -278,6 +278,7 @@ function readTestDrive(b) {
   const t = {
     name: s(b.name, 100), email: s(b.email, 160).toLowerCase(), phone: s(b.phone, 40),
     night: s(b.night, 20), dealer: s(b.dealer, 60), ticket: s(b.ticket, 60),
+    seats: Number(b.seats) === 1 ? 1 : 2, // a ticket admits the holder + 1 guest unless they say otherwise
   };
   if (!t.name) return { error: 'Please enter your name.' };
   if (!emailOk(t.email)) return { error: 'Please enter a valid email address.' };
@@ -315,6 +316,9 @@ const server = http.createServer(async (req, res) => {
     if (method === 'GET' && (p === '/' || p === '/rsvp')) return sendFile(res, 'rsvp.html', html);
     if (method === 'GET' && (p === '/testdrive' || p === '/test-drive' || p === '/td'))
       return sendFile(res, 'testdrive.html', html);
+    if (method === 'GET' && /^\/(testdrive|test-drive|td)\/(manage|staff|admin)\/?$/.test(p)) {
+      res.writeHead(302, { Location: '/manage#testdrive' }); return res.end();
+    }
     if (method === 'GET' && (p === '/manage' || p === '/staff' || p === '/admin')) {
       res.setHeader('X-Robots-Tag', 'noindex, nofollow');
       return sendFile(res, 'manage.html', html);
@@ -370,7 +374,7 @@ const server = http.createServer(async (req, res) => {
       rec.created_at = new Date().toISOString();
       store.testdrives.push(rec);
       save();
-      return sendJson(res, 200, { ok: true, testdrive: { id: rec.id, name: rec.name, night: rec.night, dealer: rec.dealer, ticket: rec.ticket } });
+      return sendJson(res, 200, { ok: true, testdrive: { id: rec.id, name: rec.name, night: rec.night, dealer: rec.dealer, ticket: rec.ticket, seats: rec.seats } });
     }
 
     // ── STAFF API (key-gated) ───────────────────────────────────────────────
@@ -396,10 +400,10 @@ const server = http.createServer(async (req, res) => {
         return sendCsv(res, 'afgm-rsvps.csv', lines);
       }
       if (method === 'GET' && p === '/api/staff/testdrives.csv') {
-        const lines = [['Name', 'Email', 'Phone', 'Show night', 'Dealership', 'Ticket #', 'Submitted'].join(',')];
+        const lines = [['Name', 'Email', 'Phone', 'Show night', 'Dealership', 'Ticket #', 'Seats', 'Submitted'].join(',')];
         for (const t of store.testdrives) {
           const night = (NIGHTS.find((n) => n.id === t.night) || {}).label || t.night;
-          lines.push([t.name, t.email, t.phone, night, t.dealer, t.ticket, t.created_at].map(csvCell).join(','));
+          lines.push([t.name, t.email, t.phone, night, t.dealer, t.ticket, t.seats || 2, t.created_at].map(csvCell).join(','));
         }
         return sendCsv(res, 'afgm-test-drive-tickets.csv', lines);
       }

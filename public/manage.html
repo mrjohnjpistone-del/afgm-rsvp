@@ -46,7 +46,7 @@
   .t td{padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top}
   .t td small{color:var(--ink-soft)}
   .t .x{background:none; border:1px solid var(--line); color:var(--wine-ink); border-radius:8px; padding:6px 10px; cursor:pointer; font:inherit; font-size:13px; min-height:0}
-  .seat{display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; background:#0a0f1d; border:1px solid var(--line); margin:0 4px 4px 0; white-space:nowrap}
+  .seat{display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; background:var(--field); border:1px solid var(--line); margin:0 4px 4px 0; white-space:nowrap}
   .empty{color:var(--ink-soft); text-align:center; padding:20px}
   .capform{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end}
   .capform label.f{flex:1 1 160px; margin:0}
@@ -72,7 +72,7 @@
   <div id="app" hidden>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabR" aria-selected="true">Special Evenings</button>
-      <button class="tab" role="tab" id="tabT" aria-selected="false">Test Drive</button>
+      <button class="tab" role="tab" id="tabT" aria-selected="false">Test Drive Tickets</button>
     </div>
 
     <div id="viewR">
@@ -98,7 +98,7 @@
     <div id="viewT" hidden>
       <section class="card">
         <h2>By dealership</h2>
-        <p class="lede">Each dealership has a block of <span id="blk"></span> tickets. This counts reservations against it; it doesn't stop anyone.</p>
+        <p class="lede">Each dealership has a block of <span id="blk"></span> seats — every ticket is the holder plus one guest. This counts seats reserved against it; it doesn't stop anyone.</p>
         <div class="tiles" id="dTiles"></div>
         <div class="chips" id="nChips"></div>
       </section>
@@ -110,7 +110,7 @@
           <a class="btn" id="tCsv" href="#">Download CSV</a>
           <button class="btn" type="button" onclick="window.print()">Print</button>
         </div>
-        <table class="t"><thead><tr><th>Name</th><th>Night</th><th>Dealership</th><th>Ticket #</th><th>Contact</th><th></th></tr></thead>
+        <table class="t"><thead><tr><th>Name</th><th>Night</th><th>Dealership</th><th>Ticket #</th><th>Seats</th><th>Contact</th><th></th></tr></thead>
           <tbody id="tBody"></tbody></table>
       </section>
     </div>
@@ -218,17 +218,19 @@
     }).join('') : '<tr><td colspan="7" class="empty">' + (D.rsvps.length ? 'No RSVPs match.' : 'No RSVPs yet.') + '</td></tr>';
 
     // Test drive
+    var seatsOf = function (t) { return t.seats === 1 ? 1 : 2; };
+    var sumSeats = function (list) { return list.reduce(function (a, t) { return a + seatsOf(t); }, 0); };
     $('blk').textContent = D.dealer_block;
     $('dTiles').innerHTML = D.dealers.map(function (d) {
-      var n = D.testdrives.filter(function (t) { return t.dealer === d; }).length;
+      var n = sumSeats(D.testdrives.filter(function (t) { return t.dealer === d; }));
       var pct = Math.min(100, Math.round(n / D.dealer_block * 100));
       return '<div class="tile"><small>' + esc(d) + '</small><div class="big">' + n + ' <span>/ ' + D.dealer_block + '</span></div>' +
-        '<div class="sub">' + Math.max(0, D.dealer_block - n) + ' left in the block' + (n > D.dealer_block ? ' · <b style="color:var(--wine-ink)">' + (n - D.dealer_block) + ' over</b>' : '') + '</div>' +
+        '<div class="sub">seats · ' + Math.max(0, D.dealer_block - n) + ' left in the block' + (n > D.dealer_block ? ' · <b style="color:var(--wine-ink)">' + (n - D.dealer_block) + ' over</b>' : '') + '</div>' +
         '<div class="bar' + (n >= D.dealer_block ? ' full' : '') + '"><i style="width:' + pct + '%"></i></div></div>';
     }).join('');
     $('nChips').innerHTML = D.nights.map(function (nt) {
-      var n = D.testdrives.filter(function (t) { return t.night === nt.id; }).length;
-      return '<span class="chip">' + esc(nt.label) + ' <b>' + n + '</b></span>';
+      var n = sumSeats(D.testdrives.filter(function (t) { return t.night === nt.id; }));
+      return '<span class="chip">' + esc(nt.label) + ' <b>' + n + '</b> seat' + (n === 1 ? '' : 's') + '</span>';
     }).join('');
     var tq = $('tq').value.trim().toLowerCase(), nf = $('tNight').value;
     var trs = D.testdrives.filter(function (t) {
@@ -241,9 +243,10 @@
       return '<tr><td data-l="Name"><b>' + esc(t.name) + '</b><br><small>' + esc(when(t.created_at)) + '</small></td>' +
         '<td data-l="Night">' + esc(nl[t.night] || t.night) + '</td><td data-l="Dealership">' + esc(t.dealer) + '</td>' +
         '<td data-l="Ticket #"><b>' + esc(t.ticket) + '</b></td>' +
+        '<td data-l="Seats">' + (seatsOf(t) === 2 ? '2 <small>(+1)</small>' : '1') + '</td>' +
         '<td data-l="Contact"><a style="color:var(--gold-ink)" href="mailto:' + esc(t.email) + '">' + esc(t.email) + '</a>' + (t.phone ? '<br>' + esc(t.phone) : '') + '</td>' +
         '<td><button class="x" data-del="testdrives" data-id="' + esc(t.id) + '">Remove</button></td></tr>';
-    }).join('') : '<tr><td colspan="6" class="empty">' + (D.testdrives.length ? 'No reservations match.' : 'No test-drive reservations yet.') + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">' + (D.testdrives.length ? 'No reservations match.' : 'No test-drive reservations yet.') + '</td></tr>';
 
     // Trash
     $('trashCard').hidden = !D.trash.length;
