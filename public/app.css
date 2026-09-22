@@ -1,0 +1,51 @@
+/* Base layout for the RSVP pages. poster.css loads after this and supplies the palette. */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--sans); font-size:16px; line-height:1.5; padding:16px; min-height:100vh}
+.wrap{max-width:760px; margin:0 auto}
+.wrap.wide{max-width:1100px}
+.card{border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin:22px 0 0; box-shadow:var(--shadow)}
+.card h2{font-family:var(--serif); text-transform:uppercase; letter-spacing:.06em; font-weight:600; color:var(--gold-ink); margin:0 0 4px; font-size:20px}
+.card .lede{color:var(--ink-soft); margin:0 0 18px; font-size:15px}
+label.f{display:block; margin:0 0 14px}
+label.f > span{display:block; font-size:13px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); margin:0 0 6px}
+label.f > span em{font-style:normal; color:var(--wine-ink)}
+input,select,textarea{width:100%; font:inherit; font-size:16px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; min-height:48px}
+select{appearance:none; -webkit-appearance:none; padding-right:40px; cursor:pointer}
+textarea{min-height:80px; resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--gold); outline-offset:1px; border-color:transparent}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:0 14px}
+@media (max-width:600px){ .row2{grid-template-columns:1fr} body{padding:16px} .card{padding:18px 16px} }
+.hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden}
+
+.ev{border:1px solid var(--line); border-radius:12px; padding:14px; margin:0 0 12px; background:rgba(12,31,82,.55)}
+.ev-top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap}
+.ev-name{font-family:var(--serif); text-transform:uppercase; letter-spacing:.05em; font-weight:600; font-size:18px; color:var(--ink)}
+.ev-when{color:var(--gold-ink); font-size:14px; margin-top:2px}
+.ev-who{color:var(--ink-soft); font-size:13px; margin-top:4px}
+.ev select{margin-top:12px}
+.ev.off{opacity:.5}
+.pill{display:inline-block; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:4px 10px; border-radius:999px; border:1px solid var(--line); color:var(--ink-soft); white-space:nowrap}
+.pill.ok{color:var(--ok); border-color:rgba(134,214,161,.4)}
+.pill.low{color:#ffd27a; border-color:rgba(255,210,122,.5)}
+.pill.full{color:#fff; background:var(--wine); border-color:var(--wine)}
+
+.check{display:flex; gap:12px; align-items:flex-start; padding:14px; border:1px solid var(--line); border-radius:12px; margin:0 0 16px; cursor:pointer; background:rgba(12,31,82,.55)}
+.check input{width:22px; height:22px; min-height:0; flex:0 0 22px; margin:1px 0 0; accent-color:var(--gold)}
+.check span{font-size:15px}
+
+.btn{appearance:none; cursor:pointer; font:inherit; border-radius:10px; padding:12px 20px; min-height:48px; border:1px solid var(--line); background:transparent; color:var(--ink)}
+.btn-primary{width:100%; font-size:17px; padding:15px 20px}
+.btn[disabled]{opacity:.55; cursor:progress}
+.msg{margin:14px 0 0; padding:12px 14px; border-radius:10px; font-size:15px; display:none}
+.msg.err{display:block; background:var(--err-bg); color:var(--err); border:1px solid rgba(255,173,173,.35)}
+.msg.ok{display:block; background:var(--ok-bg); color:var(--ok); border:1px solid rgba(134,214,161,.35)}
+
+.done{text-align:center; padding:30px 22px}
+.done h2{font-size:28px}
+.done ul{list-style:none; padding:0; margin:16px 0; text-align:left; display:inline-block}
+.done li{padding:6px 0; border-bottom:1px solid var(--line)}
+.done li b{color:var(--gold-ink)}
+.fine{color:var(--ink-soft); font-size:13px; text-align:center; margin:16px 0 0}
+.fine a,.xlink a{color:var(--gold-ink)}
+.xlink{text-align:center; margin:22px 0 0; font-size:15px}

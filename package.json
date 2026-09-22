@@ -1,0 +1,9 @@
+{
+  "name": "afgm-rsvp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RSVP and Test Drive For Tickets pages for A Few Good Men (zero dependencies)",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "engines": { "node": ">=18" }
+}

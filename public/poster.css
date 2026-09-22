@@ -1,0 +1,127 @@
+/* ─── A Few Good Men · poster theme ───────────────────────────────────────────
+   Near-black navy, a waving flag with embers behind the masthead, and big gold
+   beveled condensed lettering — the look of the show poster. Loaded AFTER each
+   page's own <style>, so these tokens and overrides win. */
+
+:root{
+  /* Patriotic, not dark: the blues, reds and gold of boldtheatre.org/a-few-good-men */
+  --bg:#12296a; --navy:#0b1d4d; --panel:#16347c; --panel-2:#1d3f90; --field:#0c1f52; --ink:#f7f2e6; --ink-soft:#c9d2ea;
+  --line:#3a58a6; --gold:#d4a93f; --gold-ink:#f4d27a; --red:#b3202a; --red-2:#8f1720; --cream:#f4efe3;
+  --wine:#c8283a; --wine-ink:#ffb3bb;
+  --ok:#86d6a1; --ok-bg:#10261a; --err:#ffadad; --err-bg:#2e1016;
+  --shadow:0 14px 44px rgba(0,0,0,.55); --radius:14px;
+  --display:"Anton","Oswald",Impact,"Haettenschweiler","Arial Narrow Bold",sans-serif;
+  --serif:"Oswald","Arial Narrow",Impact,sans-serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --gold-grad:linear-gradient(180deg,#fff6d2 0%,#f7d77e 22%,#d9a23c 46%,#8a5a14 58%,#e9bf5f 74%,#fff0b8 88%,#b07a22 100%);
+  color-scheme:dark;
+}
+html{background:var(--bg)}
+body{
+  background:
+    radial-gradient(900px 600px at 85% 8%, rgba(60,110,220,.35), transparent 60%),
+    radial-gradient(800px 700px at 5% 70%, rgba(8,22,64,.45), transparent 60%),
+    radial-gradient(700px 500px at 60% 100%, rgba(212,169,63,.12), transparent 60%),
+    linear-gradient(180deg,#17368a 0%,#12296a 40%,#0e2258 100%) fixed !important;
+  color:var(--ink);
+}
+
+/* ── Masthead ── */
+.poster{position:relative; overflow:hidden; margin:-16px -16px 0; padding:34px 16px 30px; text-align:center; isolation:isolate;
+  border-bottom:10px solid transparent;
+  border-image:repeating-linear-gradient(90deg,var(--red) 0 60px,var(--cream) 60px 120px) 10}
+.poster .flag{position:absolute; inset:0; z-index:-2; opacity:.9;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.85) 45%,transparent 100%);
+          mask-image:linear-gradient(to bottom,#000 0%,rgba(0,0,0,.85) 45%,transparent 100%)}
+.poster .flag svg{width:100%; height:100%; display:block}
+.poster::after{content:""; position:absolute; inset:0; z-index:-1;
+  background:radial-gradient(ellipse at 50% 50%, rgba(11,29,77,.35), rgba(11,29,77,.72) 85%)}
+.poster-in{position:relative; max-width:900px; margin:0 auto}
+.presents{font-family:var(--serif); text-transform:uppercase; letter-spacing:.14em; font-weight:500;
+  font-size:clamp(11px,2.4vw,14px); line-height:1.55; color:#e9e2cf; margin:0 0 10px; text-shadow:0 2px 8px #000}
+.gold-title{font-family:var(--display); font-weight:400; text-transform:uppercase; margin:0; line-height:.95;
+  font-size:clamp(46px,12.5vw,112px); letter-spacing:.015em;
+  background:var(--gold-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  -webkit-text-stroke:1px rgba(255,236,170,.55);
+  filter:drop-shadow(0 1px 0 #fff4c2) drop-shadow(0 3px 0 #6d460e) drop-shadow(0 5px 0 #3d2606) drop-shadow(0 10px 16px rgba(0,0,0,.85))}
+.credits{font-family:var(--serif); text-transform:uppercase; letter-spacing:.12em; font-size:clamp(11px,2.3vw,14px);
+  color:#efe7d3; margin:14px 0 0; text-shadow:0 2px 8px #000}
+.credits b{color:var(--gold-ink); font-weight:600}
+.dates{font-family:var(--display); text-transform:uppercase; margin:12px 0 0; letter-spacing:.04em;
+  font-size:clamp(22px,5.4vw,40px); line-height:1.05;
+  background:var(--gold-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 2px 0 #4a2f07) drop-shadow(0 6px 10px rgba(0,0,0,.8))}
+.times{font-family:var(--serif); text-transform:uppercase; letter-spacing:.16em; font-weight:600;
+  font-size:clamp(11px,2.4vw,15px); color:var(--gold-ink); margin:6px 0 0; text-shadow:0 2px 8px #000}
+.page-label{display:inline-block; margin:20px 0 0; padding:7px 16px; border-radius:999px;
+  font-family:var(--serif); text-transform:uppercase; letter-spacing:.2em; font-size:12px; font-weight:600;
+  color:#0a0d18; background:var(--gold-grad); box-shadow:0 4px 18px rgba(228,178,76,.25)}
+.page-intro{max-width:60ch; margin:12px auto 0; color:var(--ink-soft); font-size:14px}
+
+/* embers drifting up out of the flag */
+.embers{position:absolute; inset:0; z-index:-1; pointer-events:none}
+.embers i{position:absolute; bottom:-10px; left:var(--x); width:var(--s,3px); height:var(--s,3px); border-radius:50%;
+  background:radial-gradient(circle,#fff3c0 0%,#ffb341 45%,rgba(255,110,20,0) 72%);
+  box-shadow:0 0 6px 2px rgba(255,150,40,.55); opacity:0;
+  animation:ember var(--t,7s) linear var(--d,0s) infinite}
+@keyframes ember{
+  0%{transform:translate(0,0) scale(1); opacity:0}
+  10%{opacity:1}
+  70%{opacity:.8}
+  100%{transform:translate(var(--dx,30px),-340px) scale(.4); opacity:0}
+}
+@media (prefers-reduced-motion:reduce){ .embers i{animation:none; opacity:.55; bottom:auto; top:var(--y,40%)} }
+
+/* ── Sponsors ── */
+/* full-bleed red band that finishes the page, edge to edge */
+html,body{overflow-x:clip}
+body{padding-bottom:0 !important}
+.sponsors{margin:40px calc(50% - 50vw) 0; text-align:center; padding:26px 16px calc(30px + env(safe-area-inset-bottom)); color:#fff;
+  background:linear-gradient(135deg,rgba(0,0,0,.18),transparent 60%),var(--red);
+  border-top:10px solid transparent; border-image:repeating-linear-gradient(90deg,var(--cream) 0 60px,var(--navy) 60px 120px) 10}
+.sp-row{display:flex; flex-wrap:wrap; justify-content:center; gap:14px 34px}
+.sp{min-width:180px}
+.sp small{display:block; font-family:var(--serif); text-transform:uppercase; letter-spacing:.2em; font-size:10.5px; color:#ffe0e3; margin-bottom:4px}
+.sp span{font-family:var(--serif); text-transform:uppercase; letter-spacing:.06em; font-size:17px; font-weight:600; color:#fff}
+.sp.lead span{font-family:var(--display); font-weight:400; font-size:30px; letter-spacing:.03em; color:var(--gold-ink); text-shadow:0 2px 0 var(--red-2),0 4px 12px rgba(0,0,0,.35)}
+.sp-venue{margin-top:16px; font-size:12px; color:#ffe0e3; letter-spacing:.04em}
+
+/* ── Tabs ── */
+.tabs{display:flex; gap:6px; justify-content:center; margin:18px 0 0}
+.tab{appearance:none; cursor:pointer; font-family:var(--serif); text-transform:uppercase; letter-spacing:.14em;
+  font-size:14px; font-weight:600; padding:10px 22px; border-radius:999px; color:var(--ink-soft);
+  background:var(--navy); border:1px solid var(--line)}
+.tab[aria-selected="true"]{color:#0a0d18; background:var(--gold-grad); border-color:transparent}
+.tab:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+
+/* ── Controls in the poster palette ── */
+.card{background:linear-gradient(180deg,rgba(27,62,146,.94),rgba(18,44,108,.96)); border:1px solid rgba(212,169,63,.45) !important;
+  border-top:5px solid var(--red) !important}
+.item{background:var(--panel); box-shadow:none !important}
+input,textarea,select{background:var(--field); border-color:var(--line); color:var(--ink)}
+input::placeholder,textarea::placeholder{color:#8f9cc4}
+select,select.native{
+  background-color:var(--field) !important; background-repeat:no-repeat !important; background-position:right 12px center !important;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f3d488' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+}
+select option{background:var(--navy); color:var(--ink)}
+.btn-primary{background:var(--gold-grad) !important; color:#0a0d18 !important; border:0;
+  font-family:var(--serif); text-transform:uppercase; letter-spacing:.1em; font-weight:600;
+  box-shadow:0 4px 16px rgba(228,178,76,.22)}
+.btn-primary:hover{filter:brightness(1.07)}
+.btn-ghost{color:var(--ink)}
+.btn-ghost:hover{background:var(--panel-2)}
+h2.sec,.group-head h2{font-family:var(--serif); text-transform:uppercase; letter-spacing:.06em; font-weight:600; color:var(--gold-ink)}
+.qty{font-family:var(--serif); color:var(--gold-ink); background:var(--field)}
+.tag{background:var(--field)}
+.tag.new{color:#fff !important; background:var(--wine) !important; border-color:var(--wine) !important}
+.rule{background:linear-gradient(90deg,transparent,#b22234 20%,#e9e4d8 50%,#1c2a5a 80%,transparent) !important; height:2px !important; opacity:.7}
+.foot-note a,.note a{color:var(--gold-ink) !important}
+
+@media print{
+  .card{border:1px solid #999 !important; background:#fff !important}
+  .poster .flag,.embers,.poster::after,.tabs,.sponsors{display:none !important}
+  .gold-title,.dates{color:#000 !important; background:none !important; filter:none !important; -webkit-text-stroke:0}
+  .presents,.credits,.times{color:#000 !important; text-shadow:none}
+  .page-label{background:none !important; box-shadow:none; color:#000; border:1px solid #000}
+}
