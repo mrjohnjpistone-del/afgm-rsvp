@@ -1,7 +1,7 @@
-// A Few Good Men — RSVP + Test Drive For Tickets.
+// A Few Good Men — RSVP + Test Ride / Test Drive For Tickets.
 //
 //   RSVP PAGE        GET  /                      open: special-event RSVPs (alias /rsvp)
-//   TEST DRIVE PAGE  GET  /testdrive             open: Test Drive For Tickets claims
+//   TEST DRIVE PAGE  GET  /testdrive             open: Test Ride / Test Drive claims
 //   MANAGE PAGE      GET  /manage                key-gated: counts, lists, CSV, caps (alias /staff, /admin)
 //
 // Zero npm dependencies, one JSON file with atomic serialized writes — the same build
@@ -36,7 +36,7 @@ const EVENTS = [
 const CATEGORIES = ['Veteran', 'Active Duty Military', 'First Responder', 'Teacher', 'Student'];
 const DEFAULT_CAP = 80;
 
-// Test Drive For Tickets: every show night except the Veteran's Day performance.
+// Test Ride / Test Drive For Tickets: every show night except the Veteran's Day performance.
 const NIGHTS = [
   { id: '2026-11-06', label: 'Friday, Nov. 6 @ 7:00 PM' },
   { id: '2026-11-07', label: 'Saturday, Nov. 7 @ 7:00 PM' },
@@ -283,8 +283,8 @@ function readTestDrive(b) {
   if (!t.name) return { error: 'Please enter your name.' };
   if (!emailOk(t.email)) return { error: 'Please enter a valid email address.' };
   if (!NIGHTS.some((n) => n.id === t.night)) return { error: 'Please choose a show night.' };
-  if (!DEALERS.includes(t.dealer)) return { error: 'Please choose where you took your test drive.' };
-  if (b.ack !== true) return { error: 'Please check the box confirming your test drive.' };
+  if (!DEALERS.includes(t.dealer)) return { error: 'Please choose where you took your test ride or test drive.' };
+  if (b.ack !== true) return { error: 'Please check the box confirming your test ride or test drive.' };
   if (!t.ticket) return { error: 'Please enter your ticket number.' };
   return { rec: t };
 }
@@ -405,7 +405,7 @@ const server = http.createServer(async (req, res) => {
           const night = (NIGHTS.find((n) => n.id === t.night) || {}).label || t.night;
           lines.push([t.name, t.email, t.phone, night, t.dealer, t.ticket, t.seats || 2, t.created_at].map(csvCell).join(','));
         }
-        return sendCsv(res, 'afgm-test-drive-tickets.csv', lines);
+        return sendCsv(res, 'afgm-test-ride-drive-tickets.csv', lines);
       }
 
       const del = p.match(/^\/api\/staff\/(rsvps|testdrives)\/([\w-]{1,60})$/);

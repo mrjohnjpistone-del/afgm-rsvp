@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>A Few Good Men — Test Drive For Tickets</title>
+<title>A Few Good Men — Test Ride / Test Drive For Tickets</title>
 <meta name="description" content="A Few Good Men · Bold Theatre · Rialto Community Arts Center, Morrilton · November 6–21, 2026">
-<meta name="theme-color" content="#0b0704">
+<meta name="theme-color" content="#152c52">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
 <link rel="stylesheet" href="/app.css?v=3">
-<link rel="stylesheet" href="/poster.css?v=5">
+<link rel="stylesheet" href="/poster.css?v=6">
 </head>
 <body>
 <header class="poster">
@@ -22,13 +22,13 @@
     <p class="credits">Written by <b>Aaron Sorkin</b> &nbsp;·&nbsp; Directed by <b>John J. Pistone</b></p>
     <p class="dates">November 6–21, 2026</p>
     <p class="times">Fridays &amp; Saturdays 7PM &nbsp;·&nbsp; Sundays 3PM</p>
-    <div class="page-label" id="pageTitle">Test Drive For Tickets</div>
+    <div class="page-label" id="pageTitle">Test Ride / Test Drive For Tickets</div>
   </div>
 </header>
 <main class="wrap">
   <section class="card" id="formCard">
-    <h2>Test Drive For Tickets</h2>
-    <p class="lede">Took a test drive at <b>Toad Suck Harley-Davidson</b> or <b>Jay Hodge Ford</b>? Choose your night and enter the ticket number you were given to reserve your seat.</p>
+    <h2>Test Ride / Test Drive For Tickets</h2>
+    <p class="lede">Took a test ride at <b>Toad Suck Harley-Davidson</b> or a test drive at <b>Jay Hodge Ford</b>? Choose your night and enter the ticket number you were given to reserve your seat.</p>
 
     <form id="f" novalidate>
       <label class="f"><span>Your name <em>*</em></span><input id="name" autocomplete="name" maxlength="100" required></label>
@@ -39,7 +39,7 @@
       <label class="f"><span>Show night <em>*</em></span>
         <select id="night" required><option value="">Choose a night…</option></select>
       </label>
-      <label class="f"><span>Where did you take your test drive? <em>*</em></span>
+      <label class="f"><span>Where did you take your test ride or test drive? <em>*</em></span>
         <select id="dealer" required><option value="">Choose one…</option></select>
       </label>
       <label class="f"><span>Ticket number <em>*</em></span><input id="ticket" maxlength="60" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="From the ticket the dealership gave you" required></label>
@@ -49,7 +49,7 @@
       <div class="hp" aria-hidden="true"><label>Website <input id="website" tabindex="-1" autocomplete="off"></label></div>
 
       <label class="check"><input type="checkbox" id="ack">
-        <span id="ackText">I acknowledge that I took a test drive at the dealership selected above.</span></label>
+        <span id="ackText">I acknowledge that I took a test ride or test drive at the dealership selected above.</span></label>
 
       <button class="btn btn-primary" id="go" type="submit">Reserve my seat</button>
       <div class="msg" id="msg" role="alert"></div>
@@ -81,6 +81,10 @@
 <script>
 (function () {
   'use strict';
+  // Harley gives you a ride, Ford gives you a drive. Say whichever one they took.
+  function rideWord(dealer) { return /harley/i.test(dealer || '') ? 'test ride' : 'test drive'; }
+  function capWord(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
   var $ = function (id) { return document.getElementById(id); };
   var info = null;
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -97,8 +101,8 @@
 
   $('dealer').addEventListener('change', function () {
     var v = $('dealer').value;
-    $('ackText').textContent = v ? 'I acknowledge that I took a test drive at ' + v + '.'
-                                 : 'I acknowledge that I took a test drive at the dealership selected above.';
+    $('ackText').textContent = v ? 'I acknowledge that I took a ' + rideWord(v) + ' at ' + v + '.'
+                                 : 'I acknowledge that I took a test ride or test drive at the dealership selected above.';
   });
 
   $('f').addEventListener('submit', function (ev) {
@@ -107,9 +111,9 @@
     if (!$('name').value.trim()) return fail('Please enter your name.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('email').value.trim())) return fail('Please enter a valid email address.');
     if (!$('night').value) return fail('Please choose a show night.');
-    if (!$('dealer').value) return fail('Please choose where you took your test drive.');
+    if (!$('dealer').value) return fail('Please choose where you took your test ride or test drive.');
     if (!$('ticket').value.trim()) return fail('Please enter your ticket number.');
-    if (!$('ack').checked) return fail('Please check the box confirming your test drive.');
+    if (!$('ack').checked) return fail('Please check the box confirming your test ride or test drive.');
     var btn = $('go'); btn.disabled = true; btn.textContent = 'Sending…'; $('msg').className = 'msg';
     fetch('/api/testdrive', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -125,7 +129,7 @@
         $('doneList').innerHTML = '<li><b>A Few Good Men</b><br>' + esc(night) + '</li>' +
           '<li><b>Ticket #</b> ' + esc(x.d.testdrive.ticket) + '</li>' +
           '<li><b>Seats</b> ' + (x.d.testdrive.seats === 1 ? 'just you' : 'you + 1 guest') + '</li>' +
-          '<li><b>Test drive</b> ' + esc($('dealer').value) + '</li>';
+          '<li><b>' + capWord(rideWord($('dealer').value)) + '</b> ' + esc($('dealer').value) + '</li>';
         $('formCard').hidden = true; $('doneCard').hidden = false;
         $('doneCard').scrollIntoView({ block: 'start', behavior: 'smooth' });
       })

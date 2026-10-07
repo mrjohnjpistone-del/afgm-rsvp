@@ -1,173 +1,313 @@
-/* ─── A Few Good Men · poster theme ───────────────────────────────────────────
-   Matched to the show poster: a near-black courtroom lit warm, gold Roman
-   lettering with a red marble core, hairline gold rules broken by three stars,
-   and the flag pushed to one side instead of filling the frame. Loaded AFTER
-   each page's own <style>, so these tokens and overrides win. */
+/* ===========================================================================
+   A Few Good Men  ·  Bold Theatre  ·  shared skin for the RSVP page and the
+   materials register.
+
+   The poster is a one-sheet: a dark, lit stage. These two pages are not that.
+   They are the paperwork behind it, and paperwork gets read -- often on a
+   phone, backstage, by someone in a hurry. So the drama is kept where it
+   costs nothing, the masthead, which is the flag's blue canton, and
+   everything below it is printed on document stock: ivory paper, navy
+   headings, a crimson stripe down the edge of every card the way an exhibit
+   is marked, and brass rules with a star at the centre.
+   =========================================================================== */
 
 :root{
-  /* Poster palette. The brass and the red marble are the poster; the surfaces
-     under them are near-black and almost colourless on purpose, because a brown
-     panel under warm text is the one thing that makes a page hard to read. */
-  --bg:#090807; --navy:#16233f; --panel:#15130f; --panel-2:#201d17; --field:#121110;
-  --ink:#f8f3e9; --ink-soft:#ddd4c2;
-  --line:rgba(214,169,80,.30); --gold:#d6a33c; --gold-ink:#f3d488; --gold-deep:#7a4e10;
-  --red:#a01a1c; --red-2:#6d1012; --cream:#f4e9d2;
-  --wine:#c3272b; --wine-ink:#ffc0a8;
-  --ok:#9ad8a8; --ok-bg:#122015; --err:#ffb9ae; --err-bg:#2c110e;
-  --shadow:0 18px 50px rgba(0,0,0,.66); --radius:14px;
+  /* Paper first. Warm ivory, never brown: this is stock, not a stage. */
+  --bg:#f2ede1; --paper-2:#eae3d3;
+  --panel:#fffdf7; --panel-2:#f8f3e7; --field:#ffffff;
+
+  /* The flag, honestly: canton blue, stripe crimson, and the poster's brass. */
+  --navy:#152c52; --navy-2:#0f1f3c; --navy-soft:#2c4473;
+  --red:#ae1f2b; --red-2:#8c1720;
+  --wine:#ae1f2b; --wine-ink:#8c1720;
+
+  /* Gold has to earn its place on a light page. The bright one is for rules
+     and ornament; anything that is actually read takes the deep one. */
+  --gold:#b08a24; --gold-ink:#7a5c12; --gold-deep:#4e3a08;
+
+  --ink:#19181a; --ink-soft:#56504a; --cream:#fffdf7;
+  --line:#d9d0b9; --line-2:#c3b894;
+
+  --ok:#1f6b3a; --ok-bg:#e8f3ea;
+  --err:#9b1c1c; --err-bg:#fbeaea;
+
+  --shadow:0 10px 30px rgba(21,44,82,.10);
+  --radius:8px;
+
   --display:"Cinzel",Georgia,"Times New Roman",serif;
   --serif:"Cinzel",Georgia,"Times New Roman",serif;
   --book:"EB Garamond",Georgia,"Times New Roman",serif;
   --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-  /* Plain brass, for pills, buttons and dates. */
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+
   --gold-grad:linear-gradient(180deg,#fff6d2 0%,#f7d77e 20%,#d9a23c 46%,#9a6a18 60%,#edc569 78%,#fff2c0 92%,#a87720 100%);
-  /* The title has its own: brass that turns to red marble through the middle. */
   --marble-grad:linear-gradient(180deg,#fff7d6 0%,#f6d479 16%,#d49b33 32%,#a81f1c 44%,#7d1210 52%,#b4261f 60%,#d8a23a 72%,#ffeeb2 88%,#9a6a18 100%);
-  color-scheme:dark;
+  color-scheme:light;
 }
+
 html{background:var(--bg)}
+html,body{color:var(--ink)}
+/* The sponsor band is full-bleed via 100vw, which counts the scrollbar and so
+   overhangs the page by its width. Clip the stray axis; nothing here is sticky.
+   `hidden` first so browsers without `clip` still get the fix. */
+html,body{overflow-x:hidden; overflow-x:clip}
 body{
-  /* Stage light from above, kept faint. The poster's warmth belongs in the
-     masthead and the gold type, not spread across the page behind the words. */
+  /* Stock, not stage lighting. The faintest warmth, so it reads as paper
+     rather than as a blank browser window. */
   background:
-    radial-gradient(1200px 560px at 50% -6%, rgba(228,176,96,.10), transparent 60%),
-    radial-gradient(900px 560px at 8% 36%, rgba(130,96,52,.07), transparent 64%),
-    radial-gradient(760px 520px at 94% 76%, rgba(190,150,80,.05), transparent 60%),
-    linear-gradient(180deg,#131210 0%,#0a0908 48%,#060605 100%) fixed !important;
+    radial-gradient(1100px 520px at 50% 0%, rgba(21,44,82,.045), transparent 62%),
+    linear-gradient(180deg,#f6f1e6 0%,#f2ede1 42%,#ece5d6 100%) !important;
+  background-repeat:no-repeat; min-height:100%;
   color:var(--ink);
 }
 
-/* ── Masthead ── */
-.poster{position:relative; overflow:hidden; margin:-16px -16px 0; padding:34px 16px 30px; text-align:center; isolation:isolate;
-  border-bottom:3px solid transparent;
-  border-image:linear-gradient(90deg,transparent,var(--gold-deep) 10%,var(--gold) 30%,#fff3c6 50%,var(--gold) 70%,var(--gold-deep) 90%,transparent) 3}
-/* On the poster the flag hangs down one side, it does not fill the sheet. */
-.poster .flag{position:absolute; inset:0 auto 0 0; width:min(46%,420px); z-index:-2; opacity:.52;
-  -webkit-mask-image:linear-gradient(100deg,#000 0%,rgba(0,0,0,.6) 52%,transparent 86%);
-          mask-image:linear-gradient(100deg,#000 0%,rgba(0,0,0,.6) 52%,transparent 86%)}
+/* ---- masthead: the canton ------------------------------------------------ */
+.poster{
+  position:relative; overflow:hidden; isolation:isolate;
+  margin:-16px -16px 0; padding:34px 16px 30px; text-align:center;
+  background:linear-gradient(180deg,#1b3561 0%,#152c52 55%,#102041 100%) !important;
+  border-bottom:3px solid var(--gold);
+  box-shadow:0 2px 0 var(--red), 0 14px 34px rgba(15,31,60,.22);
+  color:#f2ede1;
+}
+.poster .flag{
+  position:absolute; inset:0 auto 0 0; width:min(46%,420px); z-index:-2; opacity:.50;
+  -webkit-mask-image:linear-gradient(100deg,#000 0%,rgba(0,0,0,.55) 50%,transparent 86%);
+          mask-image:linear-gradient(100deg,#000 0%,rgba(0,0,0,.55) 50%,transparent 86%);
+}
 .poster .flag svg{width:100%; height:100%; display:block}
-.poster::after{content:""; position:absolute; inset:0; z-index:-1;
+.poster::after{
+  content:""; position:absolute; inset:0; z-index:-1;
   background:
-    radial-gradient(ellipse at 50% 18%, rgba(236,176,72,.20), transparent 58%),
-    radial-gradient(ellipse at 50% 60%, rgba(10,6,3,.42), rgba(8,5,2,.88) 88%)}
-.poster-in{position:relative; max-width:900px; margin:0 auto}
-.presents{font-family:var(--serif); text-transform:uppercase; letter-spacing:.18em; font-weight:700;
-  font-size:clamp(11px,2.4vw,14px); line-height:1.7; color:var(--gold-ink); margin:0 0 6px; text-shadow:0 2px 10px #000}
-/* The poster breaks every band of type with three small stars. */
-.presents::after{content:"\2605 \2605 \2605"; display:block; margin:10px auto 0; color:var(--gold);
-  font-size:9px; letter-spacing:.7em; text-indent:.7em; opacity:.95}
-.gold-title{font-family:var(--display); font-weight:900; text-transform:uppercase; margin:0; line-height:.98;
+    radial-gradient(ellipse at 50% 12%, rgba(236,190,110,.16), transparent 58%),
+    radial-gradient(ellipse at 50% 100%, rgba(10,22,46,.55), transparent 70%);
+}
+/* The embers were stage atmosphere for a dark page. On paper they are a tic. */
+.embers{display:none !important}
+
+.poster-in{position:relative; z-index:1; max-width:900px; margin:0 auto}
+.presents{
+  font-family:var(--sans); text-transform:uppercase; letter-spacing:.17em;
+  font-size:clamp(11px,2.4vw,13.5px); line-height:1.7; font-weight:700;
+  margin:0 0 6px; color:#e7d9b4 !important; text-shadow:0 2px 10px rgba(5,12,26,.8);
+}
+.presents::after{
+  content:"\2605 \2605 \2605"; display:block; margin:10px auto 0; color:#e3c069;
+  font-size:9px; letter-spacing:.7em; text-indent:.7em;
+}
+.gold-title{
+  font-family:var(--display); font-weight:900; text-transform:uppercase; margin:0; line-height:.98;
   font-size:clamp(42px,11vw,104px); letter-spacing:.01em;
   background:var(--marble-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
-  -webkit-text-stroke:1px rgba(255,232,160,.5);
-  filter:drop-shadow(0 1px 0 #fff2bd) drop-shadow(0 3px 0 #6d460e) drop-shadow(0 6px 0 #311d04) drop-shadow(0 12px 22px rgba(0,0,0,.9))}
-.credits{font-family:var(--serif); text-transform:uppercase; letter-spacing:.14em; font-size:clamp(11px,2.3vw,14px);
-  color:var(--cream); margin:16px 0 0; text-shadow:0 2px 8px #000}
-.credits b{color:var(--gold-ink); font-weight:700}
-.credits::after{content:"\2605 \2605 \2605"; display:block; margin:12px auto 0; color:var(--gold);
-  font-size:9px; letter-spacing:.7em; text-indent:.7em; opacity:.9}
-.dates{font-family:var(--display); font-weight:900; text-transform:uppercase; margin:12px 0 0; letter-spacing:.03em;
-  font-size:clamp(22px,5.2vw,38px); line-height:1.08;
-  background:var(--gold-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
-  filter:drop-shadow(0 2px 0 #4a2f07) drop-shadow(0 6px 12px rgba(0,0,0,.85))}
-.times{font-family:var(--serif); text-transform:uppercase; letter-spacing:.18em; font-weight:700;
-  font-size:clamp(11px,2.4vw,15px); color:var(--gold-ink); margin:8px 0 0; text-shadow:0 2px 8px #000}
-.page-label{display:inline-block; margin:22px 0 0; padding:7px 18px; border-radius:999px;
-  font-family:var(--serif); text-transform:uppercase; letter-spacing:.2em; font-size:12px; font-weight:700;
-  color:#190f03; background:var(--gold-grad); box-shadow:0 4px 20px rgba(228,178,76,.28)}
-.page-intro{max-width:60ch; margin:12px auto 0; color:var(--ink-soft); font-family:var(--book); font-size:17px}
-
-/* Dust and sparks drifting through the warm light. */
-.embers{position:absolute; inset:0; z-index:-1; pointer-events:none}
-.embers i{position:absolute; bottom:-10px; left:var(--x); width:var(--s,3px); height:var(--s,3px); border-radius:50%;
-  background:radial-gradient(circle,#fff3c0 0%,#ffbe55 45%,rgba(255,130,25,0) 72%);
-  box-shadow:0 0 7px 2px rgba(255,160,50,.5); opacity:0;
-  animation:ember var(--t,7s) linear var(--d,0s) infinite}
-@keyframes ember{
-  0%{transform:translate(0,0) scale(1); opacity:0}
-  10%{opacity:1}
-  70%{opacity:.8}
-  100%{transform:translate(var(--dx,30px),-340px) scale(.4); opacity:0}
+  -webkit-text-stroke:1px rgba(255,232,160,.45);
+  filter:drop-shadow(0 1px 0 #fff2bd) drop-shadow(0 3px 0 #6d460e) drop-shadow(0 6px 0 #2a1803) drop-shadow(0 12px 22px rgba(8,16,33,.75));
 }
-@media (prefers-reduced-motion:reduce){ .embers i{animation:none; opacity:.5; bottom:auto; top:var(--y,40%)} }
-
-/* ── The poster's boxed content advisory, reusable for any framed note ── */
-.advisory{position:relative; margin:22px auto 0; max-width:62ch; padding:18px 22px; border-radius:6px;
-  font-family:var(--book); font-size:17px; line-height:1.5; color:var(--cream);
-  background:rgba(10,6,3,.55); border:1px solid var(--gold);
-  box-shadow:inset 0 0 0 4px rgba(10,6,3,.9), inset 0 0 0 5px rgba(214,163,60,.55)}
-.advisory h3{margin:0 0 8px; font-family:var(--serif); font-weight:700; text-transform:uppercase;
-  letter-spacing:.2em; font-size:12px; color:var(--gold-ink)}
-.advisory em{font-style:italic}
-
-/* ── Sponsors ── */
-html,body{overflow-x:clip}
-body{padding-bottom:0 !important}
-.sponsors{margin:46px calc(50% - 50vw) 0; text-align:center; padding:28px 16px calc(32px + env(safe-area-inset-bottom));
-  color:var(--cream);
-  background:linear-gradient(180deg,rgba(26,16,8,.96),rgba(6,4,2,.99));
-  border-top:3px solid transparent;
-  border-image:linear-gradient(90deg,transparent,var(--gold-deep) 10%,var(--gold) 30%,#fff3c6 50%,var(--gold) 70%,var(--gold-deep) 90%,transparent) 3}
-.sp-row{display:flex; flex-wrap:wrap; justify-content:center; gap:14px 34px}
-.sp{min-width:180px}
-.sp small{display:block; font-family:var(--serif); text-transform:uppercase; letter-spacing:.22em; font-size:10.5px; color:var(--gold); margin-bottom:5px; font-weight:700}
-.sp span{font-family:var(--serif); text-transform:uppercase; letter-spacing:.06em; font-size:17px; font-weight:700; color:var(--cream)}
-.sp.lead span{font-family:var(--display); font-weight:900; font-size:27px; letter-spacing:.03em;
-  background:var(--gold-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
-  filter:drop-shadow(0 2px 0 #3a2305)}
-.sp-venue{margin-top:18px; font-size:12px; color:var(--ink-soft); letter-spacing:.06em}
-
-/* ── Tabs ── */
-.tabs{display:flex; gap:6px; justify-content:center; margin:18px 0 0}
-.tab{appearance:none; cursor:pointer; font-family:var(--serif); text-transform:uppercase; letter-spacing:.16em;
-  font-size:13px; font-weight:700; padding:10px 22px; border-radius:999px; color:var(--gold-ink);
-  background:rgba(26,17,9,.9); border:1px solid var(--line)}
-.tab[aria-selected="true"]{color:#190f03; background:var(--gold-grad); border-color:transparent}
-.tab:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
-
-/* ── Controls in the poster palette ── */
-.card{background:linear-gradient(180deg,rgba(28,26,22,.96),rgba(15,14,12,.98));
-  border:1px solid var(--line) !important; border-top:3px solid var(--gold) !important}
-.card .lede,.lede{font-family:var(--book); font-size:17px; color:var(--ink-soft)}
-.item{background:var(--panel); box-shadow:none !important}
-input,textarea,select{background:var(--field); border-color:var(--line); color:var(--ink)}
-input::placeholder,textarea::placeholder{color:#a9a08d}
-select,select.native{
-  background-color:var(--field) !important; background-repeat:no-repeat !important; background-position:right 12px center !important;
-  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f3d488' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+.credits{
+  font-family:var(--serif); text-transform:uppercase; letter-spacing:.14em; font-weight:600;
+  font-size:clamp(11px,2.3vw,14px); margin:16px 0 0; color:#f0e5cd !important;
+  text-shadow:0 2px 8px rgba(5,12,26,.8);
 }
-select option{background:#15130f; color:var(--ink)}
-.btn-primary{background:var(--gold-grad) !important; color:#190f03 !important; border:0;
-  font-family:var(--serif); text-transform:uppercase; letter-spacing:.12em; font-weight:700;
-  box-shadow:0 4px 18px rgba(228,178,76,.26)}
+.credits b{font-family:var(--display); font-weight:700; letter-spacing:.03em; color:#f6dfa4}
+.credits::after{
+  content:"\2605 \2605 \2605"; display:block; margin:8px auto 0; color:#e3c069;
+  font-size:8px; letter-spacing:.7em; text-indent:.7em;
+}
+.dates{
+  font-family:var(--display); font-weight:900; text-transform:uppercase;
+  letter-spacing:.03em; font-size:clamp(22px,5.2vw,38px); line-height:1.08; margin:12px 0 0;
+  background:var(--gold-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 2px 0 rgba(8,16,33,.55));
+}
+.times{
+  font-family:var(--display); font-weight:700; text-transform:uppercase;
+  letter-spacing:.18em; font-size:clamp(11px,2.4vw,15px); margin:8px 0 0;
+  color:#f0dcae !important; text-shadow:0 2px 8px rgba(5,12,26,.8);
+}
+/* The page label is the exhibit tab: which document of the file this is. */
+.page-label{
+  display:inline-block; font-family:var(--sans); font-weight:700;
+  text-transform:uppercase; letter-spacing:.2em; font-size:12px;
+  padding:7px 18px; margin:22px 0 0; border-radius:2px;
+  color:#fff7e4 !important; background:var(--red);
+  box-shadow:0 2px 0 rgba(0,0,0,.28), inset 0 0 0 1px rgba(255,226,160,.5);
+}
+.page-intro{
+  font-family:var(--book); font-size:17px; line-height:1.5; max-width:60ch; margin:12px auto 0;
+  color:var(--ink-soft) !important;
+}
+.poster .page-intro{color:#ece0c6 !important}
+
+/* ---- the sheet below ----------------------------------------------------- */
+.wrap{color:var(--ink)}
+
+/* Every card is an exhibit: stripe on the edge, nothing else shouting. */
+.card{
+  position:relative;
+  background:var(--panel) !important;
+  border:1px solid var(--line) !important;
+  border-left:6px solid var(--red) !important;
+  border-radius:0 var(--radius) var(--radius) 0 !important;
+  box-shadow:var(--shadow) !important;
+  color:var(--ink);
+}
+h2.sec,.group-head h2,.card h2{
+  font-family:var(--display); font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--navy) !important;
+}
+h1{font-family:var(--display); color:var(--navy)}
+.card .lede,.lede{font-family:var(--book); font-size:17.5px; line-height:1.55; color:var(--ink-soft) !important}
+.eyebrow{font-family:var(--sans); text-transform:uppercase; letter-spacing:.2em; font-size:11px; color:var(--gold-ink)}
+.subtitle{font-family:var(--book); color:var(--ink-soft)}
+
+.item{
+  background:var(--panel-2) !important; border:1px solid var(--line) !important;
+  border-radius:6px !important; box-shadow:none !important; color:var(--ink);
+}
+
+/* Field labels are set like a typed form: small, spaced, plainly a label. */
+.lab,.check span{color:var(--ink)}
+label.f > span{font-family:var(--sans); text-transform:uppercase; letter-spacing:.11em; font-size:11.5px; font-weight:700; color:var(--navy-soft) !important}
+label.f > span em{color:var(--red); font-style:normal}
+
+input,textarea,select{
+  background:var(--field) !important; border:1px solid var(--line-2) !important;
+  color:var(--ink) !important; border-radius:5px !important;
+}
+input::placeholder,textarea::placeholder{color:#8e877c}
+input:focus,textarea:focus,select:focus{
+  outline:none !important;
+  border-color:var(--navy) !important;
+  box-shadow:0 0 0 3px rgba(21,44,82,.17) !important;
+}
+select,select.native{background:var(--field) !important}
+select option{background:#ffffff; color:var(--ink)}
+.qty{font-family:var(--mono); color:var(--ink)}
+
+/* ---- actions ------------------------------------------------------------- */
+.btn{font-family:var(--sans); font-weight:700; letter-spacing:.05em; border-radius:5px}
+.btn-primary{
+  background:linear-gradient(180deg,#c22b34 0%,#ae1f2b 52%,#8c1720 100%) !important;
+  border:1px solid #7b1119 !important; color:#fff8ec !important;
+  text-transform:uppercase; letter-spacing:.1em;
+  box-shadow:0 2px 0 #6d0f16, 0 6px 16px rgba(140,23,32,.28) !important;
+}
 .btn-primary:hover{filter:brightness(1.07)}
-.btn-ghost{color:var(--gold-ink)}
-.btn-ghost:hover{background:var(--panel-2)}
-h2.sec,.group-head h2,.card h2{font-family:var(--serif); text-transform:uppercase; letter-spacing:.1em; font-weight:700; color:var(--gold-ink)}
-h1{font-family:var(--display); font-weight:900; letter-spacing:.02em}
-.eyebrow{color:var(--gold) !important}
-.subtitle{font-family:var(--book) !important}
-.qty{font-family:var(--serif); color:var(--gold-ink); background:var(--field)}
-.tag{background:var(--field)}
-.tag.new{color:#fff !important; background:var(--wine) !important; border-color:var(--wine) !important}
-/* Deep red at 11px on a near-black card is a squint; these little labels take the light ink. */
-.tag.st-needed{color:var(--wine-ink) !important}
-.ev,.check{background:rgba(23,16,10,.72) !important}
-.pill{border-color:var(--line)}
-/* A hairline of brass broken by a star, the way the poster divides its bands. */
-.rule{position:relative; height:1px !important; opacity:1;
-  background:linear-gradient(90deg,transparent,rgba(214,163,60,.18) 8%,var(--gold) 44%,transparent 46%,
-    transparent 54%,var(--gold) 56%,rgba(214,163,60,.18) 92%,transparent) !important}
-.rule::after{content:"\2605"; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  color:var(--gold); font-size:10px; line-height:1}
-.foot-note a,.note a,.fine a,.xlink a{color:var(--gold-ink) !important}
+.btn-primary:active{transform:translateY(1px)}
+.btn[disabled]{filter:grayscale(.45); opacity:.6}
+.btn-ghost{background:#fffdf7 !important; border:1px solid var(--line-2) !important; color:var(--navy) !important}
+.btn-ghost:hover{background:#f4eedf !important; border-color:var(--navy-soft) !important}
+.btn-danger{background:#fff2f1 !important; border:1px solid #d9a2a2 !important; color:var(--err) !important}
+.btn:focus-visible,.tab:focus-visible,a:focus-visible{outline:2px solid var(--navy); outline-offset:2px}
 
+/* ---- small type: tags, pills, chips -------------------------------------- */
+.tag,.chip{background:#fffdf7; border:1px solid var(--line-2); color:var(--ink-soft)}
+.tag.new{color:#fff8ec !important; background:var(--red) !important; border-color:#7b1119 !important}
+.tag.st-needed{color:var(--wine-ink) !important; border-color:#d9a2a2 !important; background:#fff4f3 !important}
+.pill{background:#fffdf7; border:1px solid var(--line-2); color:var(--ink)}
+.pill.ok,.pill.st-have,.pill.st-show-ready{color:var(--ok) !important; border-color:#9ec6aa !important; background:var(--ok-bg) !important}
+.pill.low,.pill.st-borrow{color:var(--gold-ink) !important; border-color:#d8bd72 !important; background:#fdf6e3 !important}
+/* These two were tuned for a dark page and came out pale blue on paper. */
+.pill.st-buy,.pill.st-make{color:var(--navy) !important; border-color:#9fb0cd !important; background:#eef2f9 !important}
+.pill.full,.pill.st-none{color:var(--wine-ink) !important; border-color:#d9a2a2 !important; background:#fff4f3 !important}
+.p-sub{color:var(--ink-soft) !important}
+
+.ev,.check{background:var(--panel-2) !important; border:1px solid var(--line) !important; color:var(--ink)}
+.ev.off{opacity:.55}
+.ev-name{font-family:var(--display); font-weight:700; color:var(--navy)}
+.ev-when,.ev-who{color:var(--ink-soft)}
+
+/* Two panels still carry a hardcoded dark fill from the old skin -- the
+   headcount tiles and the empty-group placeholder. Both sit on paper now. */
+.tile{background:var(--panel-2) !important; border:1px solid var(--line) !important}
+.tile .big{color:var(--navy) !important}
+.tile .big span{color:var(--ink-soft) !important}
+.bar{background:var(--line) !important}
+.group-empty{background:#f6f1e3 !important; border:1px dashed var(--line-2) !important; color:var(--ink-soft) !important}
+
+.msg.ok,.done{background:var(--ok-bg) !important; border:1px solid #9ec6aa !important; color:#17502b !important}
+.msg.err{background:var(--err-bg) !important; border:1px solid #d9a2a2 !important; color:var(--err) !important}
+.done h2{color:#17502b !important}
+
+/* ---- tabs: the tabs on a file folder ------------------------------------- */
+.tabs{display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin:18px 0 0;
+  border-bottom:2px solid var(--gold)}
+.tab{
+  appearance:none; cursor:pointer; padding:10px 22px; font-size:13px;
+  font-family:var(--sans); font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+  background:#eae3d3 !important; border:1px solid var(--line-2) !important; border-bottom:none !important;
+  color:var(--navy-soft) !important; border-radius:6px 6px 0 0 !important;
+}
+.tab[aria-selected="true"]{
+  background:var(--navy) !important; border-color:var(--navy) !important; color:#f6dfa4 !important;
+}
+
+/* ---- the brass rule, with its star --------------------------------------- */
+.rule{
+  position:relative; height:1px !important; opacity:1; border:0 !important;
+  background:linear-gradient(90deg,transparent,rgba(176,138,36,.25) 8%,var(--gold) 44%,transparent 46%,
+    transparent 54%,var(--gold) 56%,rgba(176,138,36,.25) 92%,transparent) !important;
+}
+.rule::after{
+  content:"\2605"; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  color:var(--gold); font-size:10px; line-height:1;
+}
+
+/* ---- content advisory: a court exhibit box ------------------------------- */
+.advisory{
+  position:relative; margin:22px auto 0; max-width:62ch; padding:18px 22px; border-radius:4px;
+  font-family:var(--book); font-size:17px; line-height:1.5;
+  color:var(--ink) !important; background:#fffdf7 !important; border:1px solid var(--gold) !important;
+  box-shadow:inset 0 0 0 4px #fffdf7, inset 0 0 0 5px rgba(176,138,36,.5), var(--shadow) !important;
+}
+.advisory h3{
+  font-family:var(--display); text-transform:uppercase; letter-spacing:.18em;
+  color:var(--navy) !important; font-size:12px; margin:0 0 8px;
+}
+.advisory em{font-style:italic; color:var(--ink)}
+
+/* ---- sponsors ------------------------------------------------------------ */
+.sponsors{
+  margin:46px calc(50% - 50vw) 0; text-align:center;
+  padding:28px 16px calc(32px + env(safe-area-inset-bottom));
+  background:#eae3d3 !important; border-top:3px solid var(--gold); color:var(--ink-soft);
+}
+.sp-row{display:flex; flex-wrap:wrap; justify-content:center; gap:14px 34px; color:var(--ink-soft)}
+.sp{min-width:180px}
+.sp small{display:block; margin-bottom:5px; font-family:var(--sans); font-weight:700;
+  text-transform:uppercase; letter-spacing:.2em; font-size:10.5px; color:var(--gold-ink) !important}
+.sp span{font-family:var(--serif); font-weight:700; text-transform:uppercase;
+  letter-spacing:.06em; font-size:17px; color:var(--navy) !important}
+.sp.lead span{font-family:var(--display); font-weight:900; font-size:27px;
+  letter-spacing:.03em; color:var(--navy) !important}
+.sp-venue{margin-top:18px; font-family:var(--book); font-size:12px; letter-spacing:.06em;
+  color:var(--ink-soft) !important}
+
+.foot-note a,.note a,.fine a,.xlink a{color:var(--navy) !important; text-decoration-color:var(--gold)}
+
+/* ---- the register table -------------------------------------------------- */
+.ptable thead th,.ptable th{
+  background:var(--navy) !important; color:#f3e7c9 !important;
+  font-family:var(--sans); text-transform:uppercase; letter-spacing:.1em; font-size:11px;
+  border-color:var(--navy-2) !important;
+}
+.ptable td{border-color:var(--line) !important; color:var(--ink)}
+.ptable tbody tr:nth-child(even) td{background:#f8f3e7}
+.p-qty{font-family:var(--mono)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important; transition:none !important}
+}
+
+/* ---- print: it is already a document, so get out of its way -------------- */
 @media print{
-  .card{border:1px solid #999 !important; background:#fff !important}
+  html,body{background:#fff !important}
+  .card{background:#fff !important; box-shadow:none !important; border-left:3px solid #000 !important}
+  .poster{background:#fff !important; color:#000 !important; box-shadow:none !important; border-bottom:2px solid #000}
   .poster .flag,.embers,.poster::after,.tabs,.sponsors{display:none !important}
-  .gold-title,.dates,.sp.lead span{color:#000 !important; background:none !important; filter:none !important; -webkit-text-stroke:0}
-  .presents,.credits,.times{color:#000 !important; text-shadow:none}
-  .presents::after,.credits::after,.rule::after{color:#000 !important; background:none !important}
-  .page-label{background:none !important; box-shadow:none; color:#000; border:1px solid #000}
-  .advisory{box-shadow:none; border:1px solid #000; color:#000}
+  .gold-title,.dates,.sp.lead span{background:none !important; -webkit-text-fill-color:#000 !important; color:#000 !important; filter:none !important}
+  .presents,.credits,.times{color:#000 !important}
+  .presents::after,.credits::after,.rule::after{content:"" !important}
+  .page-label{background:none !important; color:#000 !important; box-shadow:none !important; border:1px solid #000}
+  .advisory{background:#fff !important; box-shadow:none !important; border:1px solid #000 !important}
+  .ptable thead th,.ptable th{background:#fff !important; color:#000 !important; border-bottom:1px solid #000 !important}
 }

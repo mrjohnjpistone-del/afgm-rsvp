@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Manage · A Few Good Men RSVPs</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0b0704">
+<meta name="theme-color" content="#152c52">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
 <link rel="stylesheet" href="/app.css?v=3">
-<link rel="stylesheet" href="/poster.css?v=5">
+<link rel="stylesheet" href="/poster.css?v=6">
 </head>
 <body>
 <header class="poster">
@@ -63,7 +63,7 @@
 <main class="wrap wide">
   <section class="card gate" id="gate">
     <h2>Staff access</h2>
-    <p class="lede">Enter the access key to see RSVPs and test-drive reservations.</p>
+    <p class="lede">Enter the access key to see RSVPs and test ride / test drive reservations.</p>
     <form id="gf"><label class="f"><span>Access key</span><input id="key" type="password" autocomplete="current-password"></label>
       <button class="btn btn-primary" type="submit">Unlock</button>
       <div class="msg" id="gmsg" role="alert"></div></form>
@@ -72,7 +72,7 @@
   <div id="app" hidden>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabR" aria-selected="true">Special Evenings</button>
-      <button class="tab" role="tab" id="tabT" aria-selected="false">Test Drive Tickets</button>
+      <button class="tab" role="tab" id="tabT" aria-selected="false">Test Ride / Test Drive Tickets</button>
     </div>
 
     <div id="viewR">
@@ -103,7 +103,7 @@
         <div class="chips" id="nChips"></div>
       </section>
       <section class="card">
-        <h2>Test-drive reservations <span id="tCount" style="color:var(--ink-soft)"></span></h2>
+        <h2>Test ride / test drive reservations <span id="tCount" style="color:var(--ink-soft)"></span></h2>
         <div class="tools">
           <input id="tq" type="search" placeholder="Search name, email, ticket #…">
           <select id="tNight" style="flex:0 1 240px; min-height:44px"><option value="">All nights</option></select>
@@ -246,13 +246,13 @@
         '<td data-l="Seats">' + (seatsOf(t) === 2 ? '2 <small>(+1)</small>' : '1') + '</td>' +
         '<td data-l="Contact"><a style="color:var(--gold-ink)" href="mailto:' + esc(t.email) + '">' + esc(t.email) + '</a>' + (t.phone ? '<br>' + esc(t.phone) : '') + '</td>' +
         '<td><button class="x" data-del="testdrives" data-id="' + esc(t.id) + '">Remove</button></td></tr>';
-    }).join('') : '<tr><td colspan="7" class="empty">' + (D.testdrives.length ? 'No reservations match.' : 'No test-drive reservations yet.') + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">' + (D.testdrives.length ? 'No reservations match.' : 'No test ride / test drive reservations yet.') + '</td></tr>';
 
     // Trash
     $('trashCard').hidden = !D.trash.length;
     $('trash').innerHTML = D.trash.map(function (x) {
       var r = x.rec || {};
-      return '<tr><td><b>' + esc(r.name) + '</b> <small>' + (x.kind === 'rsvps' ? 'RSVP' : 'Test drive · ticket ' + esc(r.ticket)) + ' · removed ' + esc(when(x.removed_at)) + '</small></td>' +
+      return '<tr><td><b>' + esc(r.name) + '</b> <small>' + (x.kind === 'rsvps' ? 'RSVP' : 'Test ride / drive · ticket ' + esc(r.ticket)) + ' · removed ' + esc(when(x.removed_at)) + '</small></td>' +
         '<td style="text-align:right"><button class="x" style="color:var(--gold-ink)" data-restore="' + esc(r.id) + '">Restore</button></td></tr>';
     }).join('');
   }
@@ -278,7 +278,7 @@
   if (location.hash === '#testdrive') setTab('T');
   ['rq', 'rEv', 'tq', 'tNight'].forEach(function (id) { $(id).addEventListener('input', render); });
   $('rCsv').onclick = function (e) { e.preventDefault(); download('/api/staff/rsvps.csv', 'afgm-rsvps.csv'); };
-  $('tCsv').onclick = function (e) { e.preventDefault(); download('/api/staff/testdrives.csv', 'afgm-test-drive-tickets.csv'); };
+  $('tCsv').onclick = function (e) { e.preventDefault(); download('/api/staff/testdrives.csv', 'afgm-test-ride-drive-tickets.csv'); };
 
   $('capf').addEventListener('submit', function (e) {
     e.preventDefault();
