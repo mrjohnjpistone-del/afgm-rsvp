@@ -5,9 +5,11 @@
    each page's own <style>, so these tokens and overrides win. */
 
 :root{
-  /* Poster palette: lamp-lit mahogany and brass, the flag's red kept for alarms only. */
-  --bg:#0b0704; --navy:#16233f; --panel:#1a1109; --panel-2:#241708; --field:#17100a;
-  --ink:#f7eddb; --ink-soft:#c9b188;
+  /* Poster palette. The brass and the red marble are the poster; the surfaces
+     under them are near-black and almost colourless on purpose, because a brown
+     panel under warm text is the one thing that makes a page hard to read. */
+  --bg:#090807; --navy:#16233f; --panel:#15130f; --panel-2:#201d17; --field:#121110;
+  --ink:#f8f3e9; --ink-soft:#ddd4c2;
   --line:rgba(214,169,80,.30); --gold:#d6a33c; --gold-ink:#f3d488; --gold-deep:#7a4e10;
   --red:#a01a1c; --red-2:#6d1012; --cream:#f4e9d2;
   --wine:#c3272b; --wine-ink:#ffc0a8;
@@ -25,12 +27,13 @@
 }
 html{background:var(--bg)}
 body{
-  /* Stage light from above, the room falling away warm and dark at the edges. */
+  /* Stage light from above, kept faint. The poster's warmth belongs in the
+     masthead and the gold type, not spread across the page behind the words. */
   background:
-    radial-gradient(1100px 620px at 50% -4%, rgba(228,166,66,.22), transparent 62%),
-    radial-gradient(820px 560px at 10% 32%, rgba(126,64,16,.30), transparent 66%),
-    radial-gradient(720px 520px at 92% 72%, rgba(196,138,48,.16), transparent 62%),
-    linear-gradient(180deg,#160e07 0%,#0b0704 46%,#060402 100%) fixed !important;
+    radial-gradient(1200px 560px at 50% -6%, rgba(228,176,96,.10), transparent 60%),
+    radial-gradient(900px 560px at 8% 36%, rgba(130,96,52,.07), transparent 64%),
+    radial-gradient(760px 520px at 94% 76%, rgba(190,150,80,.05), transparent 60%),
+    linear-gradient(180deg,#131210 0%,#0a0908 48%,#060605 100%) fixed !important;
   color:var(--ink);
 }
 
@@ -123,17 +126,17 @@ body{padding-bottom:0 !important}
 .tab:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
 
 /* ── Controls in the poster palette ── */
-.card{background:linear-gradient(180deg,rgba(32,21,11,.95),rgba(17,11,6,.97));
+.card{background:linear-gradient(180deg,rgba(28,26,22,.96),rgba(15,14,12,.98));
   border:1px solid var(--line) !important; border-top:3px solid var(--gold) !important}
 .card .lede,.lede{font-family:var(--book); font-size:17px; color:var(--ink-soft)}
 .item{background:var(--panel); box-shadow:none !important}
 input,textarea,select{background:var(--field); border-color:var(--line); color:var(--ink)}
-input::placeholder,textarea::placeholder{color:#9a8560}
+input::placeholder,textarea::placeholder{color:#a9a08d}
 select,select.native{
   background-color:var(--field) !important; background-repeat:no-repeat !important; background-position:right 12px center !important;
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f3d488' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
 }
-select option{background:#1a1109; color:var(--ink)}
+select option{background:#15130f; color:var(--ink)}
 .btn-primary{background:var(--gold-grad) !important; color:#190f03 !important; border:0;
   font-family:var(--serif); text-transform:uppercase; letter-spacing:.12em; font-weight:700;
   box-shadow:0 4px 18px rgba(228,178,76,.26)}
@@ -147,6 +150,8 @@ h1{font-family:var(--display); font-weight:900; letter-spacing:.02em}
 .qty{font-family:var(--serif); color:var(--gold-ink); background:var(--field)}
 .tag{background:var(--field)}
 .tag.new{color:#fff !important; background:var(--wine) !important; border-color:var(--wine) !important}
+/* Deep red at 11px on a near-black card is a squint; these little labels take the light ink. */
+.tag.st-needed{color:var(--wine-ink) !important}
 .ev,.check{background:rgba(23,16,10,.72) !important}
 .pill{border-color:var(--line)}
 /* A hairline of brass broken by a star, the way the poster divides its bands. */
