@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
-<link rel="stylesheet" href="/app.css?v=3">
+<link rel="stylesheet" href="/app.css?v=4">
 <link rel="stylesheet" href="/poster.css?v=8">
 </head>
 <body>
@@ -28,7 +28,8 @@
 <main class="wrap">
   <section class="card" id="formCard">
     <h2>Special Evenings</h2>
-    <p class="lede">The dinners and the Veteran's Day performance are our thank-you to <b>Veterans, Active Duty Military, First Responders and Teachers</b>. Students are welcome at the Final Dress Rehearsal. You may bring one guest to each event.</p>
+    <p class="lede">These evenings are our thank-you to <b>Veterans, Active Duty Military, First Responders and Teachers</b>. Students are welcome at the Final Dress Rehearsal. You may bring one guest.</p>
+    <p class="lede">Each dinner is served at 6:00 PM before that night's curtain, in the same building. <b>Dinner seats 80. The house seats 240.</b> So for either night you can come to dinner and the show, or come to the show only — pick whichever fits, and if a dinner fills up the show is still yours.</p>
 
     <form id="f" novalidate>
       <div class="row2">
@@ -88,45 +89,124 @@
 
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
 
-  function pill(e) {
-    var c = info.counts[e.id];
-    if (!c || c.cap == null) return '';
-    if (c.full) return '<span class="pill full">Full</span>';
-    var cls = c.left <= 10 ? 'low' : 'ok';
-    return '<span class="pill ' + cls + '">' + c.left + ' seat' + (c.left === 1 ? '' : 's') + ' left</span>';
+  function evOf(id) {
+    for (var i = 0; i < info.events.length; i++) if (info.events[i].id === id) return info.events[i];
+    return { id: id, name: id, when: '', students: false };
+  }
+  function seatsOf(id) { return (info.counts && info.counts[id]) || {}; }
+  function evenings() { return info.evenings || []; }
+
+  // One choice books one or two events. It is only open if every event it books
+  // still has room and admits the category the guest picked.
+  function booksFor(g, choice) {
+    return choice === 'dinner' ? [g.dinner, g.show] : choice === 'show' ? [g.show] : [];
+  }
+  function closedBecause(ids, student) {
+    for (var i = 0; i < ids.length; i++) {
+      if (student && !evOf(ids[i]).students) return 'students';
+      if (seatsOf(ids[i]).full) return ids[i];
+    }
+    return '';
+  }
+  function roomFor(ids) {
+    var min = null;
+    ids.forEach(function (id) {
+      var c = seatsOf(id);
+      if (c.cap == null) return;
+      min = min == null ? c.left : Math.min(min, c.left);
+    });
+    return min;
+  }
+  function pill(id, word) {
+    var c = seatsOf(id);
+    if (c.cap == null) return '';
+    if (c.full) return '<span class="pill full">' + word + ' full</span>';
+    return '<span class="pill ' + (c.left <= 10 ? 'low' : 'ok') + '">' + c.left + ' ' + word +
+      ' seat' + (c.left === 1 ? '' : 's') + ' left</span>';
+  }
+
+  function optRow(g, choice, label, note, student) {
+    var ids = booksFor(g, choice);
+    var shut = closedBecause(ids, student);
+    var word = choice === 'dinner' ? 'dinner' : 'show';
+    var sub = shut === 'students' ? 'Not open to students'
+            : shut ? esc(evOf(shut).name) + ' is full — this one is gone'
+            : esc(note);
+    return '<label class="opt' + (shut ? ' off' : '') + '">' +
+      '<input type="radio" name="ch_' + g.id + '" value="' + choice + '"' + (shut ? ' disabled' : '') + '>' +
+      '<span class="opt-t"><b>' + esc(label) + '</b><small>' + sub + '</small></span>' +
+      (shut ? '' : pill(choice === 'dinner' ? g.dinner : g.show, word)) + '</label>';
+  }
+
+  function picked(g) {
+    var sel = document.querySelector('input[name="ch_' + g.id + '"]:checked');
+    return sel ? sel.value : '';
   }
 
   function renderEvents() {
     var student = $('category').value === 'Student';
     var keep = {};
-    info.events.forEach(function (e) { var el = $('ev_' + e.id); if (el) keep[e.id] = el.value; });
-    $('events').innerHTML = info.events.map(function (e) {
-      var c = info.counts[e.id] || {};
-      var blocked = student && !e.students;
-      var who = e.students ? 'Veterans, Active Duty Military, First Responders, Teachers and Students'
-                           : 'Veterans, Active Duty Military, First Responders and Teachers';
-      var opts = '<option value="0">Not attending</option>';
-      if (!blocked && !c.full) {
-        opts += '<option value="1">Yes — just me</option>';
-        if (c.cap == null || c.left >= 2) opts += '<option value="2">Yes — me + 1 guest</option>';
-      }
-      return '<div class="ev' + (blocked || c.full ? ' off' : '') + '">' +
-        '<div class="ev-top"><div><div class="ev-name">' + esc(e.name) + '</div>' +
-        '<div class="ev-when">' + esc(e.when) + '</div>' +
-        '<div class="ev-who">' + (blocked ? 'Not open to students' : 'Open to ' + who) + '</div></div>' + pill(e) + '</div>' +
-        '<label class="f" style="margin:0"><span class="hp">' + esc(e.name) + ' attendance</span>' +
-        '<select id="ev_' + e.id + '" aria-label="' + esc(e.name) + ' attendance"' + (blocked || c.full ? ' disabled' : '') + '>' + opts + '</select></label></div>';
+    evenings().forEach(function (g) {
+      var p = $('party_' + g.id);
+      keep[g.id] = { choice: picked(g), party: p ? p.value : '' };
+    });
+
+    $('events').innerHTML = evenings().map(function (g) {
+      var show = evOf(g.show);
+      var shut = closedBecause([g.show], student);
+      var who = show.students ? 'Veterans, Active Duty Military, First Responders, Teachers and Students'
+                              : 'Veterans, Active Duty Military, First Responders and Teachers';
+      return '<div class="ev' + (shut ? ' off' : '') + '">' +
+        '<div class="ev-top"><div>' +
+          '<div class="ev-name">' + esc(g.name) + '</div>' +
+          '<div class="ev-when">' + esc(g.when) + '</div>' +
+          '<div class="ev-who">' + (shut === 'students' ? 'Not open to students' : shut ? 'This evening is full' : 'Open to ' + who) + '</div>' +
+        '</div></div>' +
+        '<fieldset class="opts"><legend class="hp">' + esc(g.name) + ' — what are you coming to?</legend>' +
+          optRow(g, 'dinner', g.both_label, g.both_note, student) +
+          optRow(g, 'show', g.show_label, g.show_note, student) +
+          '<label class="opt"><input type="radio" name="ch_' + g.id + '" value="" checked>' +
+            '<span class="opt-t"><b>Not this evening</b><small>Skip ' + esc(g.when) + '</small></span></label>' +
+        '</fieldset>' +
+        '<label class="f party" id="pw_' + g.id + '" hidden><span>How many seats?</span>' +
+          '<select id="party_' + g.id + '" aria-label="Seats for ' + esc(g.name) + '"></select></label>' +
+      '</div>';
     }).join('');
-    info.events.forEach(function (e) {
-      var el = $('ev_' + e.id);
-      if (keep[e.id] && [].some.call(el.options, function (o) { return o.value === keep[e.id]; })) el.value = keep[e.id];
-      el.addEventListener('change', syncGuest);
+
+    evenings().forEach(function (g) {
+      var k = keep[g.id] || {};
+      if (k.choice) {
+        var want = document.querySelector('input[name="ch_' + g.id + '"][value="' + k.choice + '"]');
+        if (want && !want.disabled) want.checked = true;
+      }
+      [].forEach.call(document.getElementsByName('ch_' + g.id), function (r) {
+        r.addEventListener('change', function () { syncEvening(g); syncGuest(); });
+      });
+      $('party_' + g.id).addEventListener('change', syncGuest);
+      syncEvening(g, k.party);
     });
     syncGuest();
   }
 
+  function syncEvening(g, want) {
+    var ids = booksFor(g, picked(g));
+    var wrap = $('pw_' + g.id), sel = $('party_' + g.id);
+    if (!wrap || !sel) return;
+    if (!ids.length) { wrap.hidden = true; sel.innerHTML = ''; return; }
+    var keep = want || sel.value || '1';
+    var room = roomFor(ids);
+    var html = '<option value="1">Just me</option>';
+    if (room == null || room >= 2) html += '<option value="2">Me + 1 guest</option>';
+    sel.innerHTML = html;
+    sel.value = [].some.call(sel.options, function (o) { return o.value === keep; }) ? keep : '1';
+    wrap.hidden = false;
+  }
+
   function syncGuest() {
-    var any = info.events.some(function (e) { return $('ev_' + e.id).value === '2'; });
+    var any = evenings().some(function (g) {
+      var s = $('party_' + g.id);
+      return picked(g) && s && s.value === '2';
+    });
     $('guestWrap').hidden = !any;
   }
 
@@ -154,11 +234,17 @@
     ev.preventDefault();
     if (!info) return fail('Still loading — try again in a moment.');
     var events = {}, any = false;
-    info.events.forEach(function (e) { var v = Number($('ev_' + e.id).value) || 0; events[e.id] = v; if (v) any = true; });
+    evenings().forEach(function (g) {
+      var choice = picked(g);
+      if (!choice) return;
+      var party = Number(($('party_' + g.id) || {}).value) || 1;
+      booksFor(g, choice).forEach(function (id) { events[id] = Math.max(events[id] || 0, party); });
+      any = true;
+    });
     if (!$('name').value.trim()) return fail('Please enter your name.');
     if (!$('category').value) return fail('Please choose Veteran, Active Duty Military, First Responder, Teacher or Student.');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('email').value.trim())) return fail('Please enter a valid email address.');
-    if (!any) return fail('Choose at least one event you\'ll attend.');
+    if (!any) return fail('Choose at least one evening you\'ll attend.');
     if (!$('confirm').checked) return fail('Please check the confirmation box.');
     var btn = $('go'); btn.disabled = true; btn.textContent = 'Sending…'; $('msg').className = 'msg';
     fetch('/api/rsvp', {

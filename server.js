@@ -28,13 +28,39 @@ const BACKUP_KEY = process.env.BACKUP_KEY || '';
 // `restricted` events are for Veterans, Active Duty Military, First Responders and
 // Teachers. Final Dress is the one night Students may also RSVP for.
 const EVENTS = [
-  { id: 'dd',  name: "Director's Dinner",         when: 'Thursday, Nov. 5, 2026 @ 6:00 PM',   capped: true,  students: false },
+  { id: 'dd',  name: "Director's Dinner",         when: 'Thursday, Nov. 5, 2026 @ 6:00 PM',   capped: true, students: false },
   { id: 'fd',  name: 'Final Dress Rehearsal',     when: 'Thursday, Nov. 5, 2026 @ 8:00 PM',   capped: false, students: true  },
-  { id: 'vdd', name: "Veteran's Day Dinner",      when: 'Wednesday, Nov. 11, 2026 @ 6:00 PM', capped: true,  students: false },
-  { id: 'vdp', name: "Veteran's Day Performance", when: 'Wednesday, Nov. 11, 2026 @ 7:00 PM', capped: false, students: false },
+  { id: 'vdd', name: "Veteran's Day Dinner",      when: 'Wednesday, Nov. 11, 2026 @ 6:00 PM', capped: true, students: false },
+  { id: 'vdp', name: "Veteran's Day Performance", when: 'Wednesday, Nov. 11, 2026 @ 7:00 PM', capped: true, students: false },
 ];
 const CATEGORIES = ['Veteran', 'Active Duty Military', 'First Responder', 'Teacher', 'Student'];
-const DEFAULT_CAP = 80;
+
+// Each dinner is served before that night's curtain, in the same building, so an RSVP
+// for a dinner is also an RSVP for that performance — nobody is counted twice and nobody
+// has to tick two boxes. The dinners seat 80. The house seats 240. That gap is the whole
+// reason "the show only" has to be a choice people can see and pick.
+const DINNER_CAP = 80;
+const SHOW_CAP   = 240;
+const DEFAULT_CAPS = { dd: DINNER_CAP, vdd: DINNER_CAP, vdp: SHOW_CAP };
+const CAP_IDS = Object.keys(DEFAULT_CAPS);
+
+const EVENINGS = [
+  {
+    id: 'nov5', name: 'Final Dress Night', when: 'Thursday, Nov. 5, 2026',
+    dinner: 'dd', show: 'fd',
+    both_label: "Director's Dinner, then the rehearsal", both_note: 'Dinner at 6:00 PM · curtain at 8:00 PM',
+    show_label: 'The rehearsal only',                    show_note: 'Curtain at 8:00 PM · no dinner',
+  },
+  {
+    id: 'nov11', name: "Veteran's Day", when: 'Wednesday, Nov. 11, 2026',
+    dinner: 'vdd', show: 'vdp',
+    both_label: 'Dinner, then the show', both_note: 'Dinner at 6:00 PM · curtain at 7:00 PM',
+    show_label: 'The show only',         show_note: 'Curtain at 7:00 PM · no dinner',
+  },
+];
+const SHOW_OF = {};
+for (const g of EVENINGS) SHOW_OF[g.dinner] = g.show;
+const eventName = (id) => (EVENTS.find((e) => e.id === id) || {}).name || id;
 
 // Test Ride / Test Drive For Tickets: every show night except the Veteran's Day performance.
 const NIGHTS = [
@@ -52,7 +78,7 @@ const DEALER_BLOCK = 100; // seats set aside per dealership (each ticket covers 
 
 function freshStore() {
   return {
-    settings: { staff_key: DEFAULT_KEY, caps: { dd: DEFAULT_CAP, vdd: DEFAULT_CAP } },
+    settings: { staff_key: DEFAULT_KEY, caps: Object.assign({}, DEFAULT_CAPS) },
     // { id, name, email, phone, category, events: { dd: 0|1|2, ... }, guest, notes, created_at }
     rsvps: [],
     // { id, name, email, phone, night, dealer, ticket, seats: 1|2, created_at }
@@ -62,13 +88,25 @@ function freshStore() {
 }
 
 // ── Storage ──────────────────────────────────────────────────────────────────
+// Dinner implies that night's performance, so an RSVP stored before the show had its own
+// seat count is filled in on read rather than left to undercount the house.
+function upgradeRsvp(r) {
+  if (!r || typeof r !== 'object') return r;
+  const ev = r.events && typeof r.events === 'object' ? r.events : {};
+  for (const g of EVENINGS) {
+    const dinner = Math.round(Number(ev[g.dinner]) || 0);
+    if (dinner > 0) ev[g.show] = Math.max(Math.round(Number(ev[g.show]) || 0), dinner);
+  }
+  r.events = ev;
+  return r;
+}
 function normalize(d) {
   const base = freshStore();
   const out = {};
   out.settings = Object.assign(base.settings, d && d.settings || {});
-  out.settings.caps = Object.assign({ dd: DEFAULT_CAP, vdd: DEFAULT_CAP }, out.settings.caps || {});
+  out.settings.caps = Object.assign({}, DEFAULT_CAPS, out.settings.caps || {});
   if (!out.settings.staff_key) out.settings.staff_key = DEFAULT_KEY;
-  out.rsvps = d && Array.isArray(d.rsvps) ? d.rsvps : [];
+  out.rsvps = (d && Array.isArray(d.rsvps) ? d.rsvps : []).map(upgradeRsvp);
   out.testdrives = d && Array.isArray(d.testdrives) ? d.testdrives : [];
   out.trash = d && Array.isArray(d.trash) ? d.trash : [];
   return out;
@@ -217,18 +255,23 @@ function seatsTaken(eventId, exceptId) {
   for (const r of store.rsvps) if (r.id !== exceptId) n += Number(r.events && r.events[eventId]) || 0;
   return n;
 }
+function capOf(id) {
+  const n = Math.round(Number(store.settings.caps[id]));
+  return Number.isFinite(n) && n > 0 ? n : DEFAULT_CAPS[id] || null;
+}
+function seatsLeft(id) { return Math.max(0, capOf(id) - seatsTaken(id)); }
 function counts() {
   const out = {};
   for (const e of EVENTS) {
     const taken = seatsTaken(e.id);
-    const cap = e.capped ? Number(store.settings.caps[e.id]) || DEFAULT_CAP : null;
+    const cap = e.capped ? capOf(e.id) : null;
     out[e.id] = { taken, cap, left: cap == null ? null : Math.max(0, cap - taken), full: cap != null && taken >= cap };
   }
   return out;
 }
 function publicInfo() {
   return {
-    events: EVENTS, categories: CATEGORIES, counts: counts(),
+    events: EVENTS, evenings: EVENINGS, categories: CATEGORIES, counts: counts(),
     nights: NIGHTS, dealers: DEALERS,
   };
 }
@@ -268,7 +311,11 @@ function readRsvp(b) {
     if (party) any = true;
     if (party === 2) guests = true;
   }
-  if (!any) return { error: 'Choose at least one event you\'ll attend.' };
+  // A seat at a dinner is a seat at that night's performance, whatever the form sent.
+  for (const g of EVENINGS) {
+    if (r.events[g.dinner]) r.events[g.show] = Math.max(r.events[g.show] || 0, r.events[g.dinner]);
+  }
+  if (!any) return { error: 'Choose at least one evening you\'ll attend.' };
   if (!guests) r.guest = '';
   if (b.confirm !== true) return { error: 'Please confirm the eligibility statement.' };
   return { rec: r };
@@ -343,15 +390,23 @@ const server = http.createServer(async (req, res) => {
       // await in it, so two people can't both take the last seat.
       for (const e of EVENTS) {
         if (!e.capped || !rec.events[e.id]) continue;
-        const cap = Number(store.settings.caps[e.id]) || DEFAULT_CAP;
-        const left = cap - seatsTaken(e.id);
+        const left = seatsLeft(e.id);
         if (rec.events[e.id] > left) {
-          return sendJson(res, 409, {
-            error: left <= 0
-              ? e.name + ' is full.'
-              : e.name + ' has only ' + left + ' seat left — choose "Just me", or skip this dinner.',
-            counts: counts(),
-          });
+          // A full dinner is not a full evening: say what's still open.
+          const showId = SHOW_OF[e.id];
+          const showLeft = showId ? seatsLeft(showId) : 0;
+          let error;
+          if (left <= 0) {
+            error = e.name + ' is full.';
+            if (showLeft > 0) {
+              error += ' The ' + eventName(showId) + ' still has ' + showLeft + ' seat' +
+                (showLeft === 1 ? '' : 's') + ' — choose the show only.';
+            }
+          } else {
+            error = e.name + ' has only ' + left + ' seat left — choose "Just me"' +
+              (showId ? ', or come to the show only.' : ', or skip this dinner.');
+          }
+          return sendJson(res, 409, { error, counts: counts() });
         }
       }
       rec.id = uuid();
@@ -432,7 +487,7 @@ const server = http.createServer(async (req, res) => {
 
       if (method === 'POST' && p === '/api/staff/caps') {
         const b = await readBody(req);
-        for (const id of ['dd', 'vdd']) {
+        for (const id of CAP_IDS) {
           if (!Object.prototype.hasOwnProperty.call(b, id)) continue;
           const n = Math.round(Number(b[id]));
           if (!Number.isFinite(n) || n < 1 || n > 2000) return sendJson(res, 400, { error: 'Caps must be between 1 and 2000.' });
