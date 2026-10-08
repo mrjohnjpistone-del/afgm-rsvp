@@ -48,18 +48,20 @@ const EVENINGS = [
   {
     id: 'nov5', name: 'Final Dress Night', when: 'Thursday, Nov. 5, 2026',
     dinner: 'dd', show: 'fd',
-    both_label: "Director's Dinner, then the rehearsal", both_note: 'Dinner at 6:00 PM · curtain at 8:00 PM',
-    show_label: 'The rehearsal only',                    show_note: 'Curtain at 8:00 PM · no dinner',
+    both_label: 'Dinner and the rehearsal', both_note: 'Dinner at 6:00 PM · curtain at 8:00 PM',
+    dinner_label: 'Dinner only',            dinner_note: 'Dinner at 6:00 PM · heading out before curtain',
+    show_label: 'Rehearsal only',           show_note: 'Curtain at 8:00 PM · no dinner',
   },
   {
     id: 'nov11', name: "Veteran's Day", when: 'Wednesday, Nov. 11, 2026',
     dinner: 'vdd', show: 'vdp',
-    both_label: 'Dinner, then the show', both_note: 'Dinner at 6:00 PM · curtain at 7:00 PM',
-    show_label: 'The show only',         show_note: 'Curtain at 7:00 PM · no dinner',
+    both_label: 'Dinner and the show', both_note: 'Dinner at 6:00 PM · curtain at 7:00 PM',
+    dinner_label: 'Dinner only',       dinner_note: 'Dinner at 6:00 PM · heading out before curtain',
+    show_label: 'Show only',           show_note: 'Curtain at 7:00 PM · no dinner',
   },
 ];
-const SHOW_OF = {};
-for (const g of EVENINGS) SHOW_OF[g.dinner] = g.show;
+const SHOW_OF = {}, DINNER_OF = {};
+for (const g of EVENINGS) { SHOW_OF[g.dinner] = g.show; DINNER_OF[g.show] = g.dinner; }
 const eventName = (id) => (EVENTS.find((e) => e.id === id) || {}).name || id;
 
 // Test Ride / Test Drive For Tickets: every show night except the Veteran's Day performance.
@@ -88,14 +90,19 @@ function freshStore() {
 }
 
 // ── Storage ──────────────────────────────────────────────────────────────────
-// Dinner implies that night's performance, so an RSVP stored before the show had its own
-// seat count is filled in on read rather than left to undercount the house.
+// Records written before the form offered "dinner only" could not say no to the show, so
+// their dinner seat implied a house seat. Newer records mean exactly what they say, which
+// is why the fill-in runs once and stamps the record instead of running on every load.
+const SCHEMA = 2;
 function upgradeRsvp(r) {
   if (!r || typeof r !== 'object') return r;
   const ev = r.events && typeof r.events === 'object' ? r.events : {};
-  for (const g of EVENINGS) {
-    const dinner = Math.round(Number(ev[g.dinner]) || 0);
-    if (dinner > 0) ev[g.show] = Math.max(Math.round(Number(ev[g.show]) || 0), dinner);
+  if (!(Number(r.v) >= 2)) {
+    for (const g of EVENINGS) {
+      const dinner = Math.round(Number(ev[g.dinner]) || 0);
+      if (dinner > 0) ev[g.show] = Math.max(Math.round(Number(ev[g.show]) || 0), dinner);
+    }
+    r.v = SCHEMA;
   }
   r.events = ev;
   return r;
@@ -311,10 +318,7 @@ function readRsvp(b) {
     if (party) any = true;
     if (party === 2) guests = true;
   }
-  // A seat at a dinner is a seat at that night's performance, whatever the form sent.
-  for (const g of EVENINGS) {
-    if (r.events[g.dinner]) r.events[g.show] = Math.max(r.events[g.show] || 0, r.events[g.dinner]);
-  }
+  r.v = SCHEMA; // dinner no longer implies the show: the form asks, so the record is literal
   if (!any) return { error: 'Choose at least one evening you\'ll attend.' };
   if (!guests) r.guest = '';
   if (b.confirm !== true) return { error: 'Please confirm the eligibility statement.' };
@@ -392,19 +396,21 @@ const server = http.createServer(async (req, res) => {
         if (!e.capped || !rec.events[e.id]) continue;
         const left = seatsLeft(e.id);
         if (rec.events[e.id] > left) {
-          // A full dinner is not a full evening: say what's still open.
-          const showId = SHOW_OF[e.id];
-          const showLeft = showId ? seatsLeft(showId) : 0;
+          // A full dinner is not a full evening, and a full house is not a cancelled dinner:
+          // name the other half of that night so nobody thinks the evening is closed.
+          const otherId = SHOW_OF[e.id] || DINNER_OF[e.id];
+          const otherLeft = otherId ? seatsLeft(otherId) : 0;
+          const instead = SHOW_OF[e.id] ? 'show only' : 'dinner only';
           let error;
           if (left <= 0) {
             error = e.name + ' is full.';
-            if (showLeft > 0) {
-              error += ' The ' + eventName(showId) + ' still has ' + showLeft + ' seat' +
-                (showLeft === 1 ? '' : 's') + ' — choose the show only.';
+            if (otherLeft > 0) {
+              error += ' The ' + eventName(otherId) + ' still has ' + otherLeft + ' seat' +
+                (otherLeft === 1 ? '' : 's') + ' — choose "' + instead + '".';
             }
           } else {
             error = e.name + ' has only ' + left + ' seat left — choose "Just me"' +
-              (showId ? ', or come to the show only.' : ', or skip this dinner.');
+              (otherLeft > 0 ? ', or choose "' + instead + '".' : '.');
           }
           return sendJson(res, 409, { error, counts: counts() });
         }

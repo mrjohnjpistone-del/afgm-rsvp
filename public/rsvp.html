@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap">
-<link rel="stylesheet" href="/app.css?v=4">
+<link rel="stylesheet" href="/app.css?v=5">
 <link rel="stylesheet" href="/poster.css?v=8">
 </head>
 <body>
@@ -29,7 +29,7 @@
   <section class="card" id="formCard">
     <h2>Special Evenings</h2>
     <p class="lede">These evenings are our thank-you to <b>Veterans, Active Duty Military, First Responders and Teachers</b>. Students are welcome at the Final Dress Rehearsal. You may bring one guest.</p>
-    <p class="lede">Each dinner is served at 6:00 PM before that night's curtain, in the same building. <b>Dinner seats 80. The house seats 240.</b> So for either night you can come to dinner and the show, or come to the show only — pick whichever fits, and if a dinner fills up the show is still yours.</p>
+    <p class="lede">Each dinner is served at 6:00 PM before that night's curtain, in the same building. <b>Dinner seats 80. The house seats 240.</b> For either night, come to dinner and the show, dinner only, or the show only — whichever fits. If a dinner fills up, the show is still yours. Leave a night blank if you aren't coming to it.</p>
 
     <form id="f" novalidate>
       <div class="row2">
@@ -99,8 +99,11 @@
   // One choice books one or two events. It is only open if every event it books
   // still has room and admits the category the guest picked.
   function booksFor(g, choice) {
-    return choice === 'dinner' ? [g.dinner, g.show] : choice === 'show' ? [g.show] : [];
+    return choice === 'both' ? [g.dinner, g.show]
+         : choice === 'dinner' ? [g.dinner]
+         : choice === 'show' ? [g.show] : [];
   }
+  var CHOICES = ['both', 'dinner', 'show'];
   function closedBecause(ids, student) {
     for (var i = 0; i < ids.length; i++) {
       if (student && !evOf(ids[i]).students) return 'students';
@@ -125,17 +128,24 @@
       ' seat' + (c.left === 1 ? '' : 's') + ' left</span>';
   }
 
-  function optRow(g, choice, label, note, student) {
-    var ids = booksFor(g, choice);
-    var shut = closedBecause(ids, student);
-    var word = choice === 'dinner' ? 'dinner' : 'show';
+  // The seats pill names the half that actually runs out: 80 at dinner against 240 in the
+  // house, so "dinner and the show" is governed by the dinner.
+  function labelOf(g, choice) {
+    return choice === 'both' ? g.both_label : choice === 'dinner' ? g.dinner_label : g.show_label;
+  }
+  function noteOf(g, choice) {
+    return choice === 'both' ? g.both_note : choice === 'dinner' ? g.dinner_note : g.show_note;
+  }
+  function optRow(g, choice, student) {
+    var shut = closedBecause(booksFor(g, choice), student);
+    var dinnerSide = choice !== 'show';
     var sub = shut === 'students' ? 'Not open to students'
             : shut ? esc(evOf(shut).name) + ' is full — this one is gone'
-            : esc(note);
+            : esc(noteOf(g, choice));
     return '<label class="opt' + (shut ? ' off' : '') + '">' +
       '<input type="radio" name="ch_' + g.id + '" value="' + choice + '"' + (shut ? ' disabled' : '') + '>' +
-      '<span class="opt-t"><b>' + esc(label) + '</b><small>' + sub + '</small></span>' +
-      (shut ? '' : pill(choice === 'dinner' ? g.dinner : g.show, word)) + '</label>';
+      '<span class="opt-t"><b>' + esc(labelOf(g, choice)) + '</b><small>' + sub + '</small></span>' +
+      (shut ? '' : pill(dinnerSide ? g.dinner : g.show, dinnerSide ? 'dinner' : 'show')) + '</label>';
   }
 
   function picked(g) {
@@ -153,7 +163,9 @@
 
     $('events').innerHTML = evenings().map(function (g) {
       var show = evOf(g.show);
-      var shut = closedBecause([g.show], student);
+      // The evening is only closed when none of the three ways in are still open.
+      var open = CHOICES.filter(function (c) { return !closedBecause(booksFor(g, c), student); });
+      var shut = open.length ? '' : closedBecause([g.show], student) || 'full';
       var who = show.students ? 'Veterans, Active Duty Military, First Responders, Teachers and Students'
                               : 'Veterans, Active Duty Military, First Responders and Teachers';
       return '<div class="ev' + (shut ? ' off' : '') + '">' +
@@ -163,11 +175,12 @@
           '<div class="ev-who">' + (shut === 'students' ? 'Not open to students' : shut ? 'This evening is full' : 'Open to ' + who) + '</div>' +
         '</div></div>' +
         '<fieldset class="opts"><legend class="hp">' + esc(g.name) + ' — what are you coming to?</legend>' +
-          optRow(g, 'dinner', g.both_label, g.both_note, student) +
-          optRow(g, 'show', g.show_label, g.show_note, student) +
-          '<label class="opt"><input type="radio" name="ch_' + g.id + '" value="" checked>' +
-            '<span class="opt-t"><b>Not this evening</b><small>Skip ' + esc(g.when) + '</small></span></label>' +
+          CHOICES.map(function (c) { return optRow(g, c, student); }).join('') +
         '</fieldset>' +
+        '<div class="ev-foot">' +
+          '<small id="skip_' + g.id + '">Not coming on this night? Leave it blank.</small>' +
+          '<button type="button" class="linkbtn" id="clr_' + g.id + '" hidden>Clear this evening</button>' +
+        '</div>' +
         '<label class="f party" id="pw_' + g.id + '" hidden><span>How many seats?</span>' +
           '<select id="party_' + g.id + '" aria-label="Seats for ' + esc(g.name) + '"></select></label>' +
       '</div>';
@@ -182,6 +195,12 @@
       [].forEach.call(document.getElementsByName('ch_' + g.id), function (r) {
         r.addEventListener('change', function () { syncEvening(g); syncGuest(); });
       });
+      // A radio can't be unticked by clicking it again, so saying "actually, not this
+      // night" after a mis-click needs a way out.
+      $('clr_' + g.id).addEventListener('click', function () {
+        [].forEach.call(document.getElementsByName('ch_' + g.id), function (r) { r.checked = false; });
+        syncEvening(g); syncGuest();
+      });
       $('party_' + g.id).addEventListener('change', syncGuest);
       syncEvening(g, k.party);
     });
@@ -192,6 +211,9 @@
     var ids = booksFor(g, picked(g));
     var wrap = $('pw_' + g.id), sel = $('party_' + g.id);
     if (!wrap || !sel) return;
+    // Blank is how you say no, so the hint stands until a choice makes it moot.
+    $('skip_' + g.id).hidden = !!ids.length;
+    $('clr_' + g.id).hidden = !ids.length;
     if (!ids.length) { wrap.hidden = true; sel.innerHTML = ''; return; }
     var keep = want || sel.value || '1';
     var room = roomFor(ids);
