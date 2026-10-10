@@ -20,6 +20,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--gold); outline-o
 .row2{display:grid; grid-template-columns:1fr 1fr; gap:0 14px}
 @media (max-width:600px){ .row2{grid-template-columns:1fr} body{padding:16px} .card{padding:18px 16px} }
 .hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden}
+/* The advisory box itself is styled in poster.css; it only needs its paragraphs
+   tamed so the browser's default 1em margins don't fight the box padding. */
+.advisory p{margin:0 0 10px}
+.advisory p:last-child{margin:0}
 
 .ev{border:1px solid var(--line); border-radius:12px; padding:14px; margin:0 0 12px; background:rgba(12,31,82,.55)}
 .ev-top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap}
