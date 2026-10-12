@@ -60,7 +60,7 @@
     <h2>Your seat is reserved</h2>
     <p id="doneWho"></p>
     <ul id="doneList"></ul>
-    <p class="fine" id="doneMail">Bring your ticket to the box office. Screenshot this page for your records.</p>
+    <p class="fine" id="doneMail">You don’t need to bring the dealership’s ticket — just give your name at the box office. Screenshot this page for your records.</p>
     <p class="xlink"><a href="/testdrive">Reserve another ticket</a></p>
   </section>
 
@@ -133,9 +133,11 @@
         // Only promise an email when the box office is actually sending them.
         var mailTo = $('email').value.trim();
         $('doneMail').innerHTML = info && info.mail && mailTo
-          ? 'Bring your ticket to the box office. A confirmation is on its way to <b>' + esc(mailTo) +
+          ? 'You don’t need to bring the dealership’s ticket — just give your name at the box office. ' +
+            'A confirmation is on its way to <b>' + esc(mailTo) +
             '</b> — if it isn’t there in a few minutes, check your spam folder.'
-          : 'Bring your ticket to the box office. Screenshot this page for your records.';
+          : 'You don’t need to bring the dealership’s ticket — just give your name at the box office. ' +
+            'Screenshot this page for your records.';
         $('formCard').hidden = true; $('doneCard').hidden = false;
         $('doneCard').scrollIntoView({ block: 'start', behavior: 'smooth' });
       })

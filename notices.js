@@ -148,8 +148,9 @@ function testDriveNotice(rec, ctx) {
     '',
     'Where: ' + VENUE + ', ' + STREET,
     '',
-    'Bring the ticket the dealership gave you to the box office on that night. Your',
-    'seats are held under your name — please arrive 20 minutes before curtain.',
+    'You do not need to bring the ticket the dealership gave you. Just give your name',
+    'at the box office — your seats are held under it. Please arrive 20 minutes before',
+    'curtain.',
     '',
     'Need a different night? Reply to this email and we will move it.',
     '',
@@ -166,7 +167,7 @@ function testDriveNotice(rec, ctx) {
     row('Seats held', '<span style="color:#b22234;font-weight:600;">' + esc(seatWord(seats)) + '</span>');
 
   const closing =
-    note('<b>Bring the ticket the dealership gave you</b> to the box office that night. Your seats are held under your name — please arrive about 20 minutes before curtain.') +
+    note('<b>You do not need to bring the ticket the dealership gave you.</b> Just give your name at the box office — your seats are held under it. Please arrive about 20 minutes before curtain.') +
     note('Need a different night? <b>Reply to this email</b> and we will move it.');
 
   return { subject, text, html: page('Your seat is reserved', 'Test Ride / Test Drive For Tickets', rows, closing) };
