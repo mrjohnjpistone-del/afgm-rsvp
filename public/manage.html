@@ -70,6 +70,7 @@
   </section>
 
   <div id="app" hidden>
+    <div id="mailbar" hidden></div>
     <div class="tabs" role="tablist">
       <button class="tab" role="tab" id="tabR" aria-selected="true">Special Evenings</button>
       <button class="tab" role="tab" id="tabT" aria-selected="false">Test Ride / Test Drive Tickets</button>
@@ -171,6 +172,24 @@
   function note(t, bad) { var m = $('smsg'); m.className = 'msg ' + (bad ? 'err' : 'ok'); m.textContent = t; }
   function when(iso) { try { return new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); } catch (e) { return ''; } }
 
+  // Confirmation email: one badge per person, so a bounced or failed send is visible
+  // on the list instead of being something you only find out about at the door.
+  function mailBit(r) {
+    var m = r.mail || {}, s = m.state;
+    var pill = function (bg, ink, txt, title) {
+      return '<span title="' + esc(title || '') + '" style="display:inline-block;margin-top:4px;padding:1px 7px;border-radius:9px;font-size:11px;' +
+        'font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:' + bg + ';color:' + ink + '">' + esc(txt) + '</span>';
+    };
+    if (s === 'sent') return pill('#dfeadd', '#24521f', 'confirmed', 'Confirmation email sent ' + when(m.at));
+    if (s === 'sending') return pill('#e7e2cf', '#5d5536', 'sending…', 'Confirmation email is queued');
+    if (s === 'failed') return pill('#f3dcdc', '#8c1f2b', 'email failed', m.error || 'Send failed');
+    if (s === 'off') return pill('#e5e5e5', '#555', 'no email', 'No mailbox was configured when this came in');
+    return pill('#e5e5e5', '#555', 'no email', 'No confirmation has been sent for this entry');
+  }
+  function resendBtn(kind, id) {
+    return ' <button class="x" data-resend="' + kind + '" data-id="' + esc(id) + '">Resend</button>';
+  }
+
   function refresh() {
     return api('/api/staff/list').then(function (d) {
       D = d;
@@ -182,6 +201,7 @@
       if (document.activeElement !== $('capDD')) $('capDD').value = d.caps.dd;
       if (document.activeElement !== $('capVDD')) $('capVDD').value = d.caps.vdd;
       if (document.activeElement !== $('capVDP')) $('capVDP').value = d.caps.vdp;
+      mailbar();
       render();
     });
   }
@@ -214,9 +234,9 @@
       return '<tr><td data-l="Name"><b>' + esc(r.name) + '</b><br><small>' + esc(when(r.created_at)) + '</small></td>' +
         '<td data-l="I am a">' + esc(r.category) + '</td><td data-l="Events">' + ev + '</td>' +
         '<td data-l="Guest">' + esc(r.guest || (D.events.some(function (e) { return r.events[e.id] === 2; }) ? '(unnamed)' : '—')) + '</td>' +
-        '<td data-l="Contact"><a style="color:var(--gold-ink)" href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a>' + (r.phone ? '<br>' + esc(r.phone) : '') + '</td>' +
+        '<td data-l="Contact"><a style="color:var(--gold-ink)" href="mailto:' + esc(r.email) + '">' + esc(r.email) + '</a>' + (r.phone ? '<br>' + esc(r.phone) : '') + '<br>' + mailBit(r) + '</td>' +
         '<td data-l="Notes">' + esc(r.notes || '') + '</td>' +
-        '<td><button class="x" data-del="rsvps" data-id="' + esc(r.id) + '">Remove</button></td></tr>';
+        '<td><button class="x" data-del="rsvps" data-id="' + esc(r.id) + '">Remove</button>' + resendBtn('rsvps', r.id) + '</td></tr>';
     }).join('') : '<tr><td colspan="7" class="empty">' + (D.rsvps.length ? 'No RSVPs match.' : 'No RSVPs yet.') + '</td></tr>';
 
     // Test drive
@@ -246,8 +266,8 @@
         '<td data-l="Night">' + esc(nl[t.night] || t.night) + '</td><td data-l="Dealership">' + esc(t.dealer) + '</td>' +
         '<td data-l="Ticket #"><b>' + esc(t.ticket) + '</b></td>' +
         '<td data-l="Seats">' + (seatsOf(t) === 2 ? '2 <small>(+1)</small>' : '1') + '</td>' +
-        '<td data-l="Contact"><a style="color:var(--gold-ink)" href="mailto:' + esc(t.email) + '">' + esc(t.email) + '</a>' + (t.phone ? '<br>' + esc(t.phone) : '') + '</td>' +
-        '<td><button class="x" data-del="testdrives" data-id="' + esc(t.id) + '">Remove</button></td></tr>';
+        '<td data-l="Contact"><a style="color:var(--gold-ink)" href="mailto:' + esc(t.email) + '">' + esc(t.email) + '</a>' + (t.phone ? '<br>' + esc(t.phone) : '') + '<br>' + mailBit(t) + '</td>' +
+        '<td><button class="x" data-del="testdrives" data-id="' + esc(t.id) + '">Remove</button>' + resendBtn('testdrives', t.id) + '</td></tr>';
     }).join('') : '<tr><td colspan="7" class="empty">' + (D.testdrives.length ? 'No reservations match.' : 'No test ride / test drive reservations yet.') + '</td></tr>';
 
     // Trash
@@ -259,8 +279,35 @@
     }).join('');
   }
 
+  // One line at the top of the page saying whether confirmation emails are going out,
+  // and from which address, so nobody has to guess why a badge says "no email".
+  function mailbar() {
+    var el = $('mailbar');
+    if (D.mail_on) {
+      el.hidden = false;
+      el.setAttribute('style', 'margin:0 0 18px;padding:10px 14px;border-radius:4px;border-left:4px solid #2f6b28;' +
+        'background:#e8f0e6;color:#24521f;font-size:14px;line-height:1.5');
+      el.innerHTML = 'Confirmation emails are on, sent from <b>' + esc(D.mail_from) + '</b>.';
+    } else {
+      el.hidden = false;
+      el.setAttribute('style', 'margin:0 0 18px;padding:10px 14px;border-radius:4px;border-left:4px solid #b22234;' +
+        'background:#f6e7e7;color:#8c1f2b;font-size:14px;line-height:1.5');
+      el.innerHTML = 'Confirmation emails are <b>off</b> — nobody who signs up is being emailed. ' +
+        'Everything below is still being recorded.';
+    }
+  }
+
   document.addEventListener('click', function (ev) {
     var del = ev.target.closest('[data-del]'), rs = ev.target.closest('[data-restore]');
+    var re = ev.target.closest('[data-resend]');
+    if (re) {
+      var kind = re.getAttribute('data-resend'), id = re.getAttribute('data-id');
+      re.disabled = true; re.textContent = 'Sending…';
+      api('/api/staff/resend', { method: 'POST', body: JSON.stringify({ kind: kind, id: id }) })
+        .then(function (r) { note('Confirmation queued to ' + r.to + '.'); return refresh(); })
+        .catch(function (e) { re.disabled = false; re.textContent = 'Resend'; alert(e.message); });
+      return;
+    }
     if (del) {
       if (!confirm('Remove this entry? You can restore it from "Recently removed".')) return;
       api('/api/staff/' + del.getAttribute('data-del') + '/' + encodeURIComponent(del.getAttribute('data-id')), { method: 'DELETE' })

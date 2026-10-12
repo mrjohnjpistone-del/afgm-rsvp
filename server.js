@@ -12,6 +12,8 @@ const http   = require('http');
 const fs     = require('fs');
 const path   = require('path');
 const crypto = require('crypto');
+const mail    = require('./mail');
+const notices = require('./notices');
 
 const PORT        = process.env.PORT || 3000;
 const DATA_DIR    = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -280,6 +282,9 @@ function publicInfo() {
   return {
     events: EVENTS, evenings: EVENINGS, categories: CATEGORIES, counts: counts(),
     nights: NIGHTS, dealers: DEALERS,
+    // So the thank-you card can promise a confirmation email only when one is
+    // actually going to arrive.
+    mail: mail.configured(),
   };
 }
 function csvCell(v) {
@@ -287,6 +292,17 @@ function csvCell(v) {
   // A leading = + - @ would run as a formula when the CSV is opened in Excel.
   const safe = /^[=+\-@]/.test(t) ? "'" + t : t;
   return /[",\n]/.test(safe) ? '"' + safe.replace(/"/g, '""') + '"' : safe;
+}
+// Plain words for the CSV column, so a staff member reading it in Excel doesn't have
+// to know what "off" meant.
+function mailState(r) {
+  const m = r.mail;
+  if (!m) return 'not sent';
+  if (m.state === 'sent') return 'sent ' + String(m.at).slice(0, 16).replace('T', ' ');
+  if (m.state === 'sending') return 'sending';
+  if (m.state === 'failed') return 'FAILED — ' + (m.error || 'unknown');
+  if (m.state === 'off') return 'email was switched off';
+  return 'not sent';
 }
 function sendCsv(res, name, lines) {
   res.writeHead(200, {
@@ -341,6 +357,31 @@ function readTestDrive(b) {
 }
 const ticketKey = (t) => String(t).toUpperCase().replace(/[\s-]+/g, '');
 
+// ── Confirmation email ───────────────────────────────────────────────────────
+// The record is already saved before this runs, and the send is queued, so a mail
+// server that is slow, wrong or down costs nobody their seat. The outcome is written
+// onto the record itself: the manage page shows it and can press Resend.
+const MAIL_CTX = { EVENTS, EVENINGS, NIGHTS, eventName };
+
+function confirm(kind, rec) {
+  const notice = kind === 'rsvps' ? notices.rsvpNotice(rec, MAIL_CTX) : notices.testDriveNotice(rec, MAIL_CTX);
+  if (!mail.configured()) {
+    rec.mail = { state: 'off', at: new Date().toISOString() };
+    save();
+    return;
+  }
+  rec.mail = { state: 'sending', at: new Date().toISOString() };
+  save();
+  mail.send({ to: rec.email, toName: rec.name, ref: rec.id, subject: notice.subject, text: notice.text, html: notice.html })
+    .then((r) => {
+      // Find it again: a staff removal may have happened while the mail was in flight.
+      const live = store[kind].find((x) => x.id === rec.id);
+      if (!live) return;
+      live.mail = r.ok ? { state: 'sent', at: r.at } : { state: 'failed', at: r.at, error: String(r.error || '').slice(0, 300) };
+      save();
+    });
+}
+
 // ── Static pages ─────────────────────────────────────────────────────────────
 function sendFile(res, file, type) {
   fs.readFile(path.join(PUBLIC_DIR, file), (err, buf) => {
@@ -376,7 +417,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (method === 'GET' && (p === '/poster.css' || p === '/app.css')) return sendFile(res, p.slice(1), 'text/css; charset=utf-8');
     if (method === 'GET' && p === '/health')
-      return sendJson(res, 200, { ok: true, rsvps: store.rsvps.length, testdrives: store.testdrives.length });
+      return sendJson(res, 200, { ok: true, rsvps: store.rsvps.length, testdrives: store.testdrives.length, mail: mail.configured(), mail_queue: mail.pending() });
 
     // ── PUBLIC API: seat counts in, submissions out. No one's details ever leave. ──
     if (method === 'GET' && p === '/api/info') return sendJson(res, 200, publicInfo());
@@ -419,6 +460,7 @@ const server = http.createServer(async (req, res) => {
       rec.created_at = new Date().toISOString();
       store.rsvps.push(rec);
       save();
+      confirm('rsvps', rec);
       return sendJson(res, 200, { ok: true, rsvp: { id: rec.id, name: rec.name, events: rec.events, guest: rec.guest }, counts: counts() });
     }
 
@@ -435,6 +477,7 @@ const server = http.createServer(async (req, res) => {
       rec.created_at = new Date().toISOString();
       store.testdrives.push(rec);
       save();
+      confirm('testdrives', rec);
       return sendJson(res, 200, { ok: true, testdrive: { id: rec.id, name: rec.name, night: rec.night, dealer: rec.dealer, ticket: rec.ticket, seats: rec.seats } });
     }
 
@@ -450,21 +493,22 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, 200, Object.assign(publicInfo(), {
           rsvps: store.rsvps, testdrives: store.testdrives,
           trash: store.trash.slice(0, 50), caps: store.settings.caps, dealer_block: DEALER_BLOCK,
+          mail_on: mail.configured(), mail_from: mail.configured() ? (process.env.MAIL_FROM || process.env.MAIL_USER) : '',
         }));
       }
 
       if (method === 'GET' && p === '/api/staff/rsvps.csv') {
-        const lines = [['Name', 'Email', 'Phone', 'I am a'].concat(EVENTS.map((e) => e.name + ' (seats)'), ['Guest', 'Notes', 'Submitted']).join(',')];
+        const lines = [['Name', 'Email', 'Phone', 'I am a'].concat(EVENTS.map((e) => e.name + ' (seats)'), ['Guest', 'Notes', 'Submitted', 'Confirmation']).join(',')];
         for (const r of store.rsvps) {
-          lines.push([r.name, r.email, r.phone, r.category].concat(EVENTS.map((e) => r.events[e.id] || ''), [r.guest, r.notes, r.created_at]).map(csvCell).join(','));
+          lines.push([r.name, r.email, r.phone, r.category].concat(EVENTS.map((e) => r.events[e.id] || ''), [r.guest, r.notes, r.created_at, mailState(r)]).map(csvCell).join(','));
         }
         return sendCsv(res, 'afgm-rsvps.csv', lines);
       }
       if (method === 'GET' && p === '/api/staff/testdrives.csv') {
-        const lines = [['Name', 'Email', 'Phone', 'Show night', 'Dealership', 'Ticket #', 'Seats', 'Submitted'].join(',')];
+        const lines = [['Name', 'Email', 'Phone', 'Show night', 'Dealership', 'Ticket #', 'Seats', 'Submitted', 'Confirmation'].join(',')];
         for (const t of store.testdrives) {
           const night = (NIGHTS.find((n) => n.id === t.night) || {}).label || t.night;
-          lines.push([t.name, t.email, t.phone, night, t.dealer, t.ticket, t.seats || 2, t.created_at].map(csvCell).join(','));
+          lines.push([t.name, t.email, t.phone, night, t.dealer, t.ticket, t.seats || 2, t.created_at, mailState(t)].map(csvCell).join(','));
         }
         return sendCsv(res, 'afgm-test-ride-drive-tickets.csv', lines);
       }
@@ -479,6 +523,16 @@ const server = http.createServer(async (req, res) => {
         store.trash = store.trash.slice(0, 50);
         save();
         return sendJson(res, 200, { ok: true });
+      }
+
+      if (method === 'POST' && p === '/api/staff/resend') {
+        const b = await readBody(req);
+        const kind = b.kind === 'testdrives' ? 'testdrives' : 'rsvps';
+        const rec = store[kind].find((x) => x.id === s(b.id, 60));
+        if (!rec) return sendJson(res, 404, { error: 'That entry is no longer on the list.' });
+        if (!mail.configured()) return sendJson(res, 400, { error: 'Email is not switched on yet — no mailbox is configured for this app.' });
+        confirm(kind, rec);
+        return sendJson(res, 200, { ok: true, to: rec.email });
       }
 
       if (method === 'POST' && p === '/api/staff/restore') {
