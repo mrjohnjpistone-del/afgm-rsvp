@@ -63,8 +63,8 @@
 <main class="wrap wide">
   <section class="card gate" id="gate">
     <h2>Staff access</h2>
-    <p class="lede">Enter the access key to see RSVPs and test ride / test drive reservations.</p>
-    <form id="gf"><label class="f"><span>Access key</span><input id="key" type="password" autocomplete="current-password"></label>
+    <p class="lede">Enter the password to see RSVPs and test ride / test drive reservations.</p>
+    <form id="gf"><label class="f"><span>Password</span><input id="key" type="password" autocomplete="current-password"></label>
       <button class="btn btn-primary" type="submit">Unlock</button>
       <div class="msg" id="gmsg" role="alert"></div></form>
   </section>
@@ -130,8 +130,8 @@
         <button class="btn" type="submit">Save caps</button>
       </form>
       <form class="capform" id="keyf" style="margin-top:16px">
-        <label class="f"><span>New access key</span><input id="newKey" autocomplete="new-password" minlength="6"></label>
-        <button class="btn" type="submit">Change key</button>
+        <label class="f"><span>New password</span><input id="newKey" autocomplete="new-password" minlength="6"></label>
+        <button class="btn" type="submit">Change password</button>
       </form>
       <div class="msg" id="smsg" role="status"></div>
     </section>
@@ -339,10 +339,10 @@
     e.preventDefault();
     var k = $('newKey').value.trim();
     if (k.length < 6) return note('Use at least 6 characters.', true);
-    if (!confirm('Change the access key to "' + k + '"? Everyone else will need the new key.')) return;
+    if (!confirm('Change the password to "' + k + '"? Everyone else will need the new password.')) return;
     api('/api/staff/key', { method: 'POST', body: JSON.stringify({ key: k }) }).then(function () {
       KEY = k; try { sessionStorage.setItem('afgm-rsvp-key', k); } catch (er) {}
-      $('newKey').value = ''; note('Access key changed.');
+      $('newKey').value = ''; note('Password changed.');
     }).catch(function (er) { note(er.message, true); });
   });
 
@@ -350,7 +350,7 @@
     e.preventDefault();
     KEY = $('key').value.trim();
     refresh().then(function () { try { sessionStorage.setItem('afgm-rsvp-key', KEY); } catch (er) {} })
-      .catch(function (er) { var m = $('gmsg'); m.className = 'msg err'; m.textContent = er.status === 401 ? 'That access key is not right.' : 'Couldn\'t reach the server — it may be waking up. Try again in 30 seconds.'; });
+      .catch(function (er) { var m = $('gmsg'); m.className = 'msg err'; m.textContent = er.status === 401 ? 'That password is not right.' : 'Couldn\'t reach the server — it may be waking up. Try again in 30 seconds.'; });
   });
 
   var qk = new URLSearchParams(location.search).get('key');
