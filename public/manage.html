@@ -26,6 +26,10 @@
   </div>
 </header>
 <style>
+  /* Always on screen, above both tabs, so the password control is never hidden. */
+  .acctbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; margin:12px 0 2px}
+  .acctbar .btn{font-size:13px; padding:8px 14px; min-height:0}
+  #keyf.flash{outline:3px solid var(--gold); outline-offset:8px; border-radius:10px}
   .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:0 0 6px}
   .tile{border:1px solid var(--line); border-radius:12px; padding:14px; background:rgba(10,15,29,.55)}
   .tile small{display:block; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-soft)}
@@ -75,6 +79,9 @@
       <button class="tab" role="tab" id="tabR" aria-selected="true">Special Evenings</button>
       <button class="tab" role="tab" id="tabT" aria-selected="false">Test Ride / Test Drive Tickets</button>
     </div>
+
+    <!-- Always on screen, on both tabs. Jumps to the password field at the bottom. -->
+    <div class="acctbar"><button class="btn" type="button" id="pwJump">Change password</button></div>
 
     <div id="viewR">
       <section class="card">
@@ -335,6 +342,14 @@
       .then(function () { note('Caps saved.'); $('capDD').blur(); $('capVDD').blur(); $('capVDP').blur(); return refresh(); })
       .catch(function (er) { note(er.message, true); });
   });
+  $('pwJump').addEventListener('click', function () {
+    var f = $('keyf');
+    f.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    f.classList.add('flash');
+    $('newKey').focus();
+    setTimeout(function () { f.classList.remove('flash'); }, 2200);
+  });
+
   $('keyf').addEventListener('submit', function (e) {
     e.preventDefault();
     var k = $('newKey').value.trim();
